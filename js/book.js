@@ -248,7 +248,7 @@
   // the digital RESUME board on the wall band opens the resume PDF in this pane
   const rb = document.getElementById('resumeBoard');
   if (rb) {
-    const RESUME = 'assets/ManishYadav_Resume26.pdf';
+    const RESUME = 'assets/ManishYadav_Resume.pdf';   // replace this file to update the resume
     const openResume = () => openPdf(RESUME, 'Resume · Manish Yadav', () => rb.focus({ preventScroll: true }));
     rb.addEventListener('click', openResume);
     rb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openResume(); } });
