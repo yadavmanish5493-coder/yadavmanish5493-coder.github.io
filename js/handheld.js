@@ -730,7 +730,7 @@
   addEventListener('scroll', () => { if (playing && Math.abs(scrollY - playY) > 1) scrollTo(0, playY); }, { passive: true });
 
   /* ---------- loop ---------- */
-  let last = performance.now(), lastF = 0, slideDir = 1;
+  let last = performance.now(), lastF = 0, slideDir = 1, restAt = 0, pillarsT = '', idxT = '';
   function frame(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     const t = now / 1000;
@@ -739,8 +739,8 @@
     for (let i = ripples.length - 1; i >= 0; i--) if (t - ripples[i].t0 > 1.4) ripples.splice(i, 1);
     document.body.classList.toggle('in-hh', window.__page.u > 8.7);
     const PG = window.__page, f = slidePos(PG.u), i0 = Math.floor(f), p = f - i0;
-    const r = hh.getBoundingClientRect();
-    if (r.top < innerHeight && r.bottom > 0) {
+    const r = hh.getBoundingClientRect(), onHH = r.top < innerHeight && r.bottom > 0;
+    if (onHH) {
       const lag = Math.max(0, r.top - stage.getBoundingClientRect().top);
       const B = bayW() * d;                                   // every world in its own bay; the strip slides with the pillars
       g.fillStyle = '#07021a'; g.fillRect(0, 0, W, H);
@@ -757,12 +757,19 @@
       }
     }
     const row = document.getElementById('hhPillars');
-    if (row) row.setAttribute('transform', `translate(${(-f * bayW()).toFixed(1)} 0)`);
-    const gf = gameBox.querySelector('iframe'), gi = gf ? SLIDES.findIndex(x => x.item.id === gf.dataset.for) : -1;
-    if (SLIDES[Math.round(f)].item.game && PG.u > 8.8) ensureGame(SLIDES[Math.round(f)]);
-    if (gi >= 0) { gameBox.style.transform = `translateX(${((gi - f) * bayW()).toFixed(1)}px)`; gameBox.style.visibility = Math.abs(gi - f) < 1 ? 'visible' : 'hidden'; }
+    const pt = `translate(${(-f * bayW()).toFixed(1)} 0)`;
+    if (row && pt !== pillarsT) { pillarsT = pt; row.setAttribute('transform', pt); }   // only touch the page when something changed
     const want = Math.round(f);
-    hnIdx.textContent = String(want + 1).padStart(2, '0');
+    // a project's game loads only once the visitor rests on its world (not while scrolling past),
+    // and is switched off when the handheld leaves the screen, so it never runs (or downloads) in the background
+    if (!onHH || Math.abs(f - want) > 0.001) restAt = now;
+    let gf = gameBox.querySelector('iframe');
+    if (gf && !onHH && !playing && !drop && !busy) { gameBox.replaceChildren(); gf = null; }
+    if (onHH && SLIDES[want].item.game && PG.u > 8.8 && now - restAt > 350) gf = ensureGame(SLIDES[want]);
+    const gi = gf ? SLIDES.findIndex(x => x.item.id === gf.dataset.for) : -1;
+    if (gi >= 0) { gameBox.style.transform = `translateX(${((gi - f) * bayW()).toFixed(1)}px)`; gameBox.style.visibility = Math.abs(gi - f) < 1 ? 'visible' : 'hidden'; }
+    const it = String(want + 1).padStart(2, '0');
+    if (it !== idxT) { idxT = it; hnIdx.textContent = it; }
     if (!drop && !busy && !playing && PG.u > 9.25 && now > swapUntil && SLIDES[want] !== cur) swapIn(SLIDES[want]);
     if (N.mode === 'hop' && t < N.t0) { /* waits on the cartridge for a beat */ const K = window.__s1 && window.__s1.kit; if (K) K.sheetSprite(hNinja, 'idleD', Math.floor(t * 12) % 25, N.from[0], N.from[1], NINJA_H); hNinja.style.display = 'block'; }
     else drawNinja(t);

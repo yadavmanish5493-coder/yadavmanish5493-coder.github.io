@@ -24,7 +24,10 @@
   const src = f => 'assets/gallery/' + f;
   const label = i => `Artwork ${i + 1} of ${ART.length} by Manish Yadav`;
   let dirty = true;
-  const IMGS = ART.map(([f]) => { const im = new Image(); im.decoding = 'async'; im.onload = () => { dirty = true; }; im.src = src(f); return im; });
+  // the artworks download only when the gallery is a few screens away, so they don't slow down the start of the page
+  const IMGS = ART.map(() => { const im = new Image(); im.decoding = 'async'; im.onload = () => { dirty = true; }; return im; });
+  let artLoading = false;
+  const loadArt = () => { artLoading = true; IMGS.forEach((im, i) => { im.src = src(ART[i][0]); }); };
 
   /* ---------- scene (world units; x right, y down, z toward the viewer; the corridor runs into -z) ---------- */
   // W×H = reference frame (scaled to cover the screen), P = focal length, eye = eye height on screen, W2 = half width,
@@ -344,6 +347,7 @@
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     requestAnimationFrame(frame);
     const r = sec.getBoundingClientRect(), wh = innerHeight;
+    if (!artLoading && r.top < wh * 6) loadArt();
     if (r.bottom < 0 || r.top > wh) { ninja.style.display = 'none'; shadow.style.opacity = 0; return; }
     if (!S) build();
     const q = clamp(-r.top / Math.max(1, r.height - wh));

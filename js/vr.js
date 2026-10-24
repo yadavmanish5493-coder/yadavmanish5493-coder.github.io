@@ -396,7 +396,7 @@
     o.cv.width = o.SW; o.cv.height = o.SH; useSky(o); buildNebula(); o.nebula = nebula;
   }
   function sizeSpace() {
-    DPR = Math.min(2, devicePixelRatio || 1);
+    DPR = Math.min(Math.min(innerWidth, innerHeight) < 600 ? 1.5 : 2, devicePixelRatio || 1);   // phones: a little less sharp, far fewer pixels to repaint (the sky is soft anyway)
     sizeSky(skyRoom, roomView); sizeSky(skyVR, stage);
   }
   let meteor = null, nextMeteor = 6;
@@ -476,7 +476,7 @@
 
   let angle = 0, target = 0, offset = 0, offsetTarget = 0, drift = 0, last = performance.now();
   const TURNS = 1.25;                                      // full revolutions across the section
-  const vrProg = () => { const P = window.__page, a = P.PH.VR; return clamp((P.u - a[0]) / (a[1] - a[0])); };
+  const vrProg = () => { const P = window.__page, a = P.PH.VR, v = clamp((P.u - a[0]) / (a[1] - a[0])); return v === v ? v : 0; };   // NaN while the page has no height: it would stick in the ring's angle
   function readScroll() { target = vrProg() * Math.PI * 2 * TURNS; }
   addEventListener('scroll', readScroll, { passive: true });
 
@@ -515,7 +515,8 @@
           (out ? frontLayer : c.ring === RING_A ? ringA : ringB).appendChild(c.el);
         }
         c.el.style.opacity = ((out ? clamp(d / 0.22) : 0.75 + 0.25 * (d + 1) / 2) * (c.ghost ? 0.3 : 1)).toFixed(2);   // ghost: it's in the handheld
-        c.el.tabIndex = d > -0.2 ? 0 : -1;                 // only visible cards are in the tab order
+        const ti = d > -0.2 ? 0 : -1;                      // only visible cards are in the tab order
+        if (c.el.tabIndex !== ti) c.el.tabIndex = ti;
         if (c.kind === 'PROJECT' && d > frontD) { frontD = d; front = c; }
       }
       if (front && csTitle.textContent !== front.item.title) csTitle.textContent = front.item.title;
@@ -549,8 +550,12 @@
         items.forEach(li => { const c = li.cloneNode(true); c.setAttribute('aria-hidden', 'true'); track.appendChild(c); });
         copies++; if (copies > 12) break;
       }
-      return { track, copies, dir: +(track.dataset.dir || 1) };
+      return { track, copies, dir: +(track.dataset.dir || 1), loop: 0 };
     });
+    // one copy's width is measured once (and again after a resize or the fonts arriving), not every frame
+    const remeasure = () => tracks.forEach(T => { T.loop = 0; });
+    addEventListener('resize', remeasure);
+    if (document.fonts) document.fonts.ready.then(remeasure);
     let x = 0, lastY = scrollY, boost = 0, prev = performance.now();
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     function tick(now) {
@@ -560,7 +565,7 @@
         boost += (Math.abs(scrollY - lastY) * 4 - boost) * (1 - Math.exp(-dt * 6));
         x += (55 + boost) * dt;   // a calm drift so the lines can be read
         for (const T of tracks) {
-          const loop = T.track.scrollWidth / T.copies;   // one copy of the list
+          const loop = T.loop || (T.loop = T.track.scrollWidth / T.copies);   // one copy of the list
           const off = ((x % loop) + loop) % loop;
           T.track.style.transform = `translateX(${(T.dir > 0 ? -off : off - loop).toFixed(1)}px)`;
         }
