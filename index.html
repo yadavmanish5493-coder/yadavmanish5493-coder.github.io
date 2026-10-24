@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manish Yadav — Studio</title>
+<meta name="description" content="Scroll to follow the ninja out of the screen.">
+<link rel="preload" as="image" href="assets/character.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/ninja-run-down.png">
+<link rel="preload" as="image" href="assets/ninja-idle-down.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="alien">
+      <path d="M12 2.2C6.4 2.2 2.6 6 2.6 10.6c0 5 4.6 10.8 9.4 11.2 4.8-.4 9.4-6.2 9.4-11.2C21.4 6 17.6 2.2 12 2.2Z" fill="#ff6a2b" stroke="#7a1d00" stroke-width="1.2"/>
+      <path d="M5.4 10.6c2.6-.4 4.6.8 5.4 3.2-2.6.6-4.8-.6-5.4-3.2ZM18.6 10.6c-2.6-.4-4.6.8-5.4 3.2 2.6.6 4.8-.6 5.4-3.2Z" fill="#1a0505"/>
+    </g>
+  </defs>
+</svg>
+
+<div id="scroller">
+  <section id="stage" aria-label="Animated studio scene: a ninja runs out of a computer screen onto the desk">
+    <!-- one pinned viewport: the room, the boards wall and the cassette room are stacked in this column;
+         scroll slides it (with holds where only the ninja moves) -->
+    <div id="column">
+      <div id="roomView">
+    <canvas id="roomSky" aria-hidden="true"></canvas>   <!-- deep space above the open roof (drawn by the VR script's sky) -->
+    <div id="cam">
+
+      <!-- ===== the room (vector, one-point perspective, vanishing point 620,330) + desk + ninja ===== -->
+      <div class="layer" id="Lroom">
+        <svg class="roomsvg" viewBox="0 0 1280 1024" aria-hidden="true">
+          <defs>
+            <radialGradient id="rgBlue"><stop offset="0" stop-color="#7f9bff" stop-opacity=".55"/><stop offset="1" stop-color="#4a3bff" stop-opacity="0"/></radialGradient>
+            <radialGradient id="rgPink"><stop offset="0" stop-color="#ff4be0" stop-opacity=".62"/><stop offset="1" stop-color="#ff1fc0" stop-opacity="0"/></radialGradient>
+            <linearGradient id="gTube" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ff8cf0"/><stop offset=".5" stop-color="#ffd4fb"/><stop offset="1" stop-color="#e62bd0"/>
+            </linearGradient>
+            <linearGradient id="gShelf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3aa8"/><stop offset="1" stop-color="#2a1a74"/></linearGradient>
+            <linearGradient id="gDragon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff48d8"/><stop offset="1" stop-color="#6a3cff"/></linearGradient>
+            <linearGradient id="gFrameBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#150a3f"/><stop offset="1" stop-color="#31199b"/></linearGradient>
+            <radialGradient id="gGlobe" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#8ff0ff"/><stop offset=".5" stop-color="#2f7dff"/><stop offset="1" stop-color="#2a1a9a"/></radialGradient>
+            <linearGradient id="gCeil" gradientUnits="userSpaceOnUse" x1="0" y1="170" x2="0" y2="-300"><stop offset="0" stop-color="#211070"/><stop offset="1" stop-color="#110540"/></linearGradient>
+            <linearGradient id="gBackWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1188"/><stop offset="1" stop-color="#3b19a8"/></linearGradient>
+            <linearGradient id="gLWall" gradientUnits="userSpaceOnUse" x1="380" y1="0" x2="-260" y2="0"><stop offset="0" stop-color="#2c118c"/><stop offset="1" stop-color="#3f1bab"/></linearGradient>
+            <linearGradient id="gRWall" gradientUnits="userSpaceOnUse" x1="860" y1="0" x2="1500" y2="0"><stop offset="0" stop-color="#2c118c"/><stop offset="1" stop-color="#3f1bab"/></linearGradient>
+            <linearGradient id="gFloor" gradientUnits="userSpaceOnUse" x1="0" y1="520" x2="0" y2="740"><stop offset="0" stop-color="#36179b"/><stop offset="1" stop-color="#5129c8"/></linearGradient>
+            <radialGradient id="rgTube"><stop offset="0" stop-color="#ff4be0" stop-opacity=".5"/><stop offset="1" stop-color="#ff1fc0" stop-opacity="0"/></radialGradient>
+            <radialGradient id="rgCool"><stop offset="0" stop-color="#a9b8ff" stop-opacity=".42"/><stop offset="1" stop-color="#6f7dff" stop-opacity="0"/></radialGradient>
+            <radialGradient id="rgFloorPool"><stop offset="0" stop-color="#ff5ce6" stop-opacity=".22"/><stop offset="1" stop-color="#ff5ce6" stop-opacity="0"/></radialGradient>
+          </defs>
+
+          <!-- shell: no ceiling (the roof is open to deep space), side walls, floor, back wall -->
+          <polygon points="380,170 380,520 -820,1470 -820,-630" fill="url(#gLWall)"/>
+          <polygon points="860,170 860,520 2060,1470 2060,-630" fill="url(#gRWall)"/>
+          <polygon points="380,520 860,520 2060,1470 -820,1470" fill="url(#gFloor)"/>
+          <rect x="380" y="170" width="480" height="350" fill="url(#gBackWall)"/>
+          <!-- skirting panels (futuristic trim) -->
+          <polygon points="380,505 860,505 860,520 380,520" fill="#241070"/>
+          <polygon points="380,505 380,520 -820,1470 -820,1290" fill="#241070"/>
+          <polygon points="860,505 860,520 2060,1470 2060,1290" fill="#241070"/>
+
+          <!-- light washes -->
+          <ellipse cx="630" cy="390" rx="250" ry="160" fill="url(#rgCool)"/>
+          <ellipse cx="640" cy="600" rx="420" ry="90" fill="url(#rgFloorPool)"/>
+
+          <!-- room edges -->
+          <g stroke="#12052b" stroke-width="2.5" fill="none" stroke-linejoin="round">
+            <polyline points="-820,-630 380,170 860,170 2060,-630"/>
+            <polyline points="-820,1470 380,520 860,520 2060,1470"/>
+            <line x1="380" y1="170" x2="380" y2="520"/><line x1="860" y1="170" x2="860" y2="520"/>
+          </g>
+          <!-- rim along the open roof: the walls' cut top edges -->
+          <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+            <polyline points="-820,-630 380,170 860,170 2060,-630" stroke="#12052b" stroke-width="13"/>
+            <polyline points="-820,-630 380,170 860,170 2060,-630" stroke="#3a26a8" stroke-width="9"/>
+            <polyline points="-820,-634 380,166 860,166 2060,-634" stroke="#a99bff" stroke-width="1.6" opacity=".9"/>
+            <polyline points="-820,-636 380,164 860,164 2060,-636" stroke="#9ff3ff" stroke-width="7" opacity=".12"/>
+          </g>
+          <!-- cove lighting along ceiling and floor -->
+          <g fill="none" stroke-linejoin="round">
+            <polyline points="-820,-618 380,178 860,178 2060,-618" stroke="#ff4be0" stroke-width="12" opacity=".14"/>
+            <polyline points="-820,-618 380,178 860,178 2060,-618" stroke="#ff9cf2" stroke-width="2"/>
+            <polyline points="-820,1290 380,505 860,505 2060,1290" stroke="#3de0ff" stroke-width="10" opacity=".16"/>
+            <polyline points="-820,1290 380,505 860,505 2060,1290" stroke="#9ff3ff" stroke-width="1.8"/>
+          </g>
+
+          <!-- wall light bars (generated in perspective) -->
+          <g id="tubes"></g>
+          <!-- floating shelves on the side walls (ninja hop spots, generated) -->
+          <g id="shelves"></g>
+
+          <!-- back-wall decor: shelf with statue + books, two frames -->
+          <g transform="translate(408.4 219) scale(.2023)">
+<!-- wall shelf -->
+          <ellipse cx="1060" cy="260" rx="430" ry="200" fill="url(#rgBlue)"/>
+          <!-- side boards -->
+          <path d="M770 150 L842 168 L848 366 L790 366 Z" fill="#241a68" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M1262 168 L1352 142 L1372 366 L1262 366 Z" fill="#241a68" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M770 150 L842 168" stroke="#7d6bff" stroke-width="3"/>
+          <path d="M1352 142 L1262 168" stroke="#7d6bff" stroke-width="3"/>
+          <!-- books -->
+          <g stroke="#12052b" stroke-width="4" stroke-linejoin="round">
+            <rect x="1090" y="150" width="34" height="216" fill="#e9e4ff"/>
+            <rect x="1124" y="178" width="46" height="188" fill="#3a2a96"/>
+            <rect x="1170" y="170" width="30" height="196" fill="#241a68"/>
+            <rect x="1200" y="205" width="36" height="161" fill="#4a3ab4"/>
+            <rect x="1236" y="150" width="28" height="216" fill="#2d1f7c"/>
+            <rect x="900" y="338" width="150" height="28" fill="#4a3ab4"/>
+            <rect x="920" y="318" width="120" height="22" fill="#2d1f7c"/>
+          </g>
+          <!-- knight -->
+          <g transform="translate(960 318)">
+            <ellipse cx="0" cy="-70" rx="110" ry="130" fill="url(#rgBlue)"/>
+            <g fill="#0d0533" stroke="#6f9bff" stroke-width="3" stroke-linejoin="round">
+              <path d="M-12 0 L-14 -56 L-26 -66 L-20 -104 L-8 -116 L-14 -128 L-2 -146 L12 -128 L8 -116 L22 -104 L28 -66 L18 -56 L16 0 Z"/>
+              <path d="M-2 -146 Q22 -176 40 -152 Q22 -158 14 -128 Z"/>
+              <ellipse cx="-34" cy="-88" rx="17" ry="34"/>
+              <path d="M34 -104 L40 -104 L44 -36 L30 -36 Z"/>
+            </g>
+            <path d="M-8 -126 L8 -126" stroke="#9fd0ff" stroke-width="3"/>
+          </g>
+          <!-- shelf plank -->
+          <path d="M770 366 L1372 366 L1400 392 L742 392 Z" fill="#6a56e0" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="742" y="392" width="658" height="30" fill="url(#gShelf)" stroke="#12052b" stroke-width="5"/>
+          <path d="M742 396 H1400" stroke="#a79bff" stroke-width="3" opacity=".7"/>
+          <g fill="#c9c3ff" stroke="#12052b" stroke-width="4"><path d="M840 422 h40 v26 h-20 v-14 h-20z"/><path d="M1262 422 h40 v26 h-20 v-14 h-20z"/></g>
+
+          <!-- left frame (dragon) -->
+          <ellipse cx="496" cy="480" rx="180" ry="40" fill="url(#rgPink)"/>
+          <path d="M388 156 L604 148 L600 474 L388 452 Z" fill="#12052b"/>
+          <path d="M404 172 L588 166 L585 456 L404 438 Z" fill="#cfc8f6"/>
+          <path d="M420 188 L572 184 L570 424 L420 412 Z" fill="url(#gFrameBg)"/>
+          <path d="M440 400 L545 404" stroke="#4aa8ff" stroke-width="6" stroke-linecap="round"/>
+          <g fill="none" stroke="url(#gDragon)" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M432 330 C440 250 470 215 520 230 C560 242 560 300 520 330 C490 350 470 330 478 300" stroke-width="22" opacity=".95"/>
+            <path d="M432 330 C440 250 470 215 520 230" stroke="#12052b" stroke-width="3" stroke-dasharray="3 14" stroke-linecap="butt"/>
+          </g>
+          <path d="M440 214 l10 -22 l10 20 l12 -22 l8 24 l14 -18 l4 22" fill="none" stroke="#ff7bf0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M404 172 L588 166 L585 200 L404 208 Z" fill="#fff" opacity=".08"/>
+
+          <!-- right frame (world game) -->
+          <ellipse cx="1615" cy="478" rx="220" ry="40" fill="url(#rgPink)"/>
+          <rect x="1462" y="146" width="306" height="332" fill="#12052b"/>
+          <rect x="1478" y="162" width="274" height="300" fill="#d0cbf3"/>
+          <rect x="1498" y="182" width="234" height="260" fill="url(#gFrameBg)"/>
+          <circle cx="1615" cy="296" r="64" fill="#12052b"/>
+          <circle cx="1615" cy="296" r="58" fill="url(#gGlobe)"/>
+          <g fill="#9bffd0" stroke="#12052b" stroke-width="2.5" stroke-linejoin="round">
+            <path d="M1578 276 q14 -16 30 -10 q8 14 -6 24 q-10 12 -24 6 z"/>
+            <path d="M1622 300 q20 -10 30 6 q-2 22 -20 28 q-12 -8 -10 -34z"/>
+            <path d="M1600 240 q16 -6 24 4 q-8 8 -22 6z"/>
+          </g>
+          <ellipse cx="1596" cy="268" rx="18" ry="10" fill="#fff" opacity=".35" transform="rotate(-30 1596 268)"/>
+          <g font-family="'Arial Black','Avenir Next',Impact,sans-serif" font-weight="900" text-anchor="middle" stroke="#12052b" stroke-width="5" paint-order="stroke" fill="#a9a2ff">
+            <text x="1615" y="396" font-size="30" letter-spacing="3">WORLD</text>
+            <text x="1615" y="428" font-size="30" letter-spacing="3">GAME</text>
+          </g>
+          </g>
+
+          <!-- rug under the desk -->
+          <ellipse cx="636" cy="568" rx="122" ry="17" fill="#6a45ff" opacity=".16"/>
+          <g fill="none" stroke="#12052b" stroke-width="2.4" opacity=".85">
+            <ellipse cx="636" cy="568" rx="122" ry="17"/><ellipse cx="636" cy="568" rx="88" ry="11.5"/>
+          </g>
+        </svg>
+
+        <div class="rig" id="rigBack">
+        <svg viewBox="0 0 1920 1080" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="gDeskTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c52e6"/><stop offset="1" stop-color="#3f2aa8"/></linearGradient>
+                    <linearGradient id="gApron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2596"/><stop offset="1" stop-color="#1f1060"/></linearGradient>
+                    <linearGradient id="gUnder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#150852"/><stop offset="1" stop-color="#07021f"/></linearGradient>
+                    <linearGradient id="gRGB" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0" stop-color="#ff3b5c"/><stop offset=".22" stop-color="#ffd23b"/><stop offset=".45" stop-color="#3bff9a"/><stop offset=".7" stop-color="#3bc8ff"/><stop offset="1" stop-color="#d63bff"/>
+                    </linearGradient>
+                    <linearGradient id="gBezel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b1a7a"/><stop offset="1" stop-color="#0f0640"/></linearGradient>
+                    <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#12053a"/><stop offset=".45" stop-color="#4a14a6"/><stop offset=".8" stop-color="#d12bd0"/><stop offset="1" stop-color="#ff6ad8"/>
+                    </linearGradient>
+                    <linearGradient id="gGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a0e86"/><stop offset=".15" stop-color="#1c0654"/><stop offset="1" stop-color="#0a0226"/></linearGradient>
+                    <linearGradient id="gSun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a6"/><stop offset=".5" stop-color="#ff9ad8"/><stop offset="1" stop-color="#ff3fd0"/></linearGradient>
+                    <linearGradient id="gBin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f74ff"/><stop offset=".5" stop-color="#5f46d6"/><stop offset="1" stop-color="#3a269a"/></linearGradient>
+                    <linearGradient id="gLamp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c58bff"/><stop offset="1" stop-color="#5a2bc0"/></linearGradient>
+                    <linearGradient id="gCone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe8ff" stop-opacity=".28"/><stop offset="1" stop-color="#ffe8ff" stop-opacity="0"/></linearGradient>
+                    <linearGradient id="gSpk" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+                      <stop offset="0" stop-color="#ff3b5c"/><stop offset=".25" stop-color="#ffd23b"/><stop offset=".5" stop-color="#3bff9a"/><stop offset=".75" stop-color="#3bc8ff"/><stop offset="1" stop-color="#d63bff"/>
+                    </linearGradient>
+                    <radialGradient id="rgScreen"><stop offset="0" stop-color="#cfd6ff" stop-opacity=".55"/><stop offset="1" stop-color="#7f9bff" stop-opacity="0"/></radialGradient>
+                    <radialGradient id="rgDeskGlow"><stop offset="0" stop-color="#ffb8f6" stop-opacity=".5"/><stop offset="1" stop-color="#ff6be0" stop-opacity="0"/></radialGradient>
+                    <clipPath id="clipL"><path d="M578 488 L982 502 L982 760 L578 772 Z"/></clipPath>
+                    <clipPath id="clipR"><path d="M1038 502 L1442 488 L1442 772 L1038 760 Z"/></clipPath>
+                    <clipPath id="clipSun"><rect x="560" y="470" width="440" height="78"/></clipPath>
+                  </defs>
+
+                  <!-- floor contact shadow -->
+                  <ellipse cx="1120" cy="1452" rx="700" ry="46" fill="#07021f" opacity=".45"/>
+
+                  <!-- under-desk void, legs, footrest -->
+                  <rect x="525" y="880" width="1190" height="575" fill="url(#gUnder)"/>
+                  <rect x="520" y="930" width="58" height="525" fill="#241470" stroke="#12052b" stroke-width="5"/>
+                  <rect x="1662" y="930" width="58" height="525" fill="#241470" stroke="#12052b" stroke-width="5"/>
+                  <rect x="540" y="1260" width="1160" height="16" rx="8" fill="#3b2a9a" stroke="#12052b" stroke-width="4" opacity=".85"/>
+
+                  <!-- desk surface + apron -->
+                  <path d="M540 795 L1700 795 L1738 880 L502 880 Z" fill="url(#gDeskTop)" stroke="#12052b" stroke-width="6" stroke-linejoin="round"/>
+                  <path d="M556 806 L1684 806" stroke="#9a87ff" stroke-width="3" opacity=".55"/>
+                  <path d="M502 880 L1738 880 L1738 936 L502 936 Z" fill="url(#gApron)" stroke="#12052b" stroke-width="6" stroke-linejoin="round"/>
+                  <path d="M506 884 H1734" stroke="#a798ff" stroke-width="4" opacity=".85"/>
+                  <g id="rgbStrip" fill="none" stroke-linecap="round">
+                    <line x1="560" y1="940" x2="1680" y2="940" stroke="url(#gRGB)" stroke-width="30" opacity=".16"/>
+                    <line x1="560" y1="940" x2="1680" y2="940" stroke="url(#gRGB)" stroke-width="16" opacity=".30"/>
+                    <line x1="560" y1="940" x2="1680" y2="940" stroke="url(#gRGB)" stroke-width="6"/>
+                  </g>
+
+                  <!-- lamp -->
+                  <ellipse cx="640" cy="838" rx="50" ry="12" fill="#12052b"/>
+                  <ellipse cx="640" cy="834" rx="42" ry="9" fill="#d3295c" stroke="#12052b" stroke-width="3"/>
+                  <path d="M640 832 C615 780 600 700 640 640 C650 626 640 612 628 606" fill="none" stroke="#12052b" stroke-width="16" stroke-linecap="round"/>
+                  <path d="M640 832 C615 780 600 700 640 640 C650 626 640 612 628 606" fill="none" stroke="#6a45d8" stroke-width="8" stroke-linecap="round"/>
+                  <path d="M604 590 L752 560 Q778 584 762 618 L650 646 Q612 628 604 590 Z" fill="url(#gLamp)" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+                  <path d="M616 592 L740 566" stroke="#f1d9ff" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+                  <path d="M652 640 L770 612 L880 800 L690 830 Z" fill="url(#gCone)"/>
+
+                  <!-- ===== left monitor ===== -->
+                  <rect x="764" y="780" width="52" height="40" fill="#1b0f58" stroke="#12052b" stroke-width="4"/>
+                  <path d="M700 820 L880 820 L896 840 L684 840 Z" fill="#2a1a82" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+                  <path d="M556 466 L1004 484 L1004 790 L556 802 Z" fill="url(#gBezel)" stroke="#12052b" stroke-width="7" stroke-linejoin="round"/>
+                  <path d="M558 468 L1002 486" stroke="#8c9cff" stroke-width="3" opacity=".8"/>
+                  <path d="M1002 486 L1002 788" stroke="#6d7cff" stroke-width="3" opacity=".6"/>
+                  <g clip-path="url(#clipL)">
+                    <rect x="560" y="470" width="440" height="330" fill="url(#gSky)"/>
+                    <!-- stars -->
+                    <g fill="#fff" opacity=".85">
+                      <circle cx="610" cy="520" r="1.6"/><circle cx="650" cy="505" r="1.2"/><circle cx="700" cy="530" r="1.8"/><circle cx="745" cy="512" r="1.2"/>
+                      <circle cx="830" cy="508" r="1.5"/><circle cx="880" cy="526" r="1.2"/><circle cx="925" cy="512" r="1.8"/><circle cx="960" cy="534" r="1.2"/>
+                      <circle cx="600" cy="544" r="1"/><circle cx="975" cy="546" r="1"/><circle cx="790" cy="496" r="1.2"/>
+                    </g>
+                    <!-- sun -->
+                    <g clip-path="url(#clipSun)">
+                      <circle cx="780" cy="548" r="86" fill="url(#gSun)"/>
+                      <g fill="#b61fc8"><rect x="680" y="500" width="200" height="3"/><rect x="680" y="514" width="200" height="4"/><rect x="680" y="528" width="200" height="5"/><rect x="680" y="540" width="200" height="6"/></g>
+                    </g>
+                    <!-- mountains -->
+                    <path d="M578 548 L630 506 L668 530 L712 498 L760 548 Z" fill="#1d0850"/>
+                    <path d="M800 548 L860 508 L900 534 L940 502 L990 548 Z" fill="#1d0850"/>
+                    <path d="M630 506 l-8 10 l14 4 z M712 498 l-9 12 l16 4z M860 508 l-9 11 l15 3z M940 502 l-8 11 l15 3z" fill="#ff7be8" opacity=".75"/>
+                    <!-- ground + grid -->
+                    <rect x="560" y="548" width="440" height="260" fill="url(#gGround)"/>
+                    <g id="gridV" stroke="#ff4be0" stroke-width="1.3" opacity=".75"></g>
+                    <g id="gridH" stroke="#3de0ff" stroke-width="1.6"></g>
+                    <rect x="560" y="541" width="440" height="14" fill="#ff7bea" opacity=".55"/>
+                    <!-- menu bar -->
+                    <rect x="578" y="488" width="404" height="15" fill="#0a0328" opacity=".7"/>
+                    <circle cx="592" cy="496" r="3" fill="#ff5f57"/><circle cx="603" cy="497" r="3" fill="#febc2e"/><circle cx="614" cy="497" r="3" fill="#28c840"/>
+                    <rect x="900" y="494" width="22" height="4" rx="2" fill="#cfc8ff"/><rect x="928" y="494" width="38" height="4" rx="2" fill="#cfc8ff"/>
+                    <!-- screen sheen -->
+                    <path d="M578 488 L760 494 L640 770 L578 772 Z" fill="#fff" opacity=".05"/>
+                  </g>
+                  <circle cx="780" cy="791" r="3.5" fill="#3bff9a"/>
+
+                  <!-- ===== right monitor ===== -->
+                  <rect x="1204" y="776" width="52" height="46" fill="#1b0f58" stroke="#12052b" stroke-width="4"/>
+                  <path d="M1130 822 L1330 822 L1346 842 L1114 842 Z" fill="#2a1a82" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+                  <path d="M1016 484 L1464 466 L1464 802 L1016 790 Z" fill="url(#gBezel)" stroke="#12052b" stroke-width="7" stroke-linejoin="round"/>
+                  <path d="M1018 486 L1462 468" stroke="#8c9cff" stroke-width="3" opacity=".8"/>
+                  <g clip-path="url(#clipR)">
+                    <rect x="1020" y="470" width="450" height="330" fill="#0d0630"/>
+                    <rect x="1038" y="488" width="64" height="290" fill="#150a45"/>
+                    <g id="codeLines" stroke-linecap="round" stroke-width="7"></g>
+                    <rect id="caret" x="1130" y="700" width="9" height="14" fill="#fff"/>
+                    <path d="M1038 502 L1250 494 L1160 770 L1038 760 Z" fill="#fff" opacity=".04"/>
+                  </g>
+                  <!-- webcam -->
+                  <g stroke="#12052b" stroke-width="4" stroke-linejoin="round">
+                    <path d="M1388 470 L1388 448" stroke-width="10"/>
+                    <circle cx="1388" cy="428" r="26" fill="#2b1f76"/>
+                    <circle cx="1388" cy="428" r="14" fill="#0a0426"/>
+                    <circle cx="1388" cy="428" r="6" fill="#4aa8ff"/>
+                  </g>
+
+                  <!-- bin -->
+                  <path d="M1108 702 L1226 706 L1204 836 L1130 836 Z" fill="url(#gBin)" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+                  <path d="M1100 700 L1234 704 L1230 716 L1104 712 Z" fill="#b9a8ff" stroke="#12052b" stroke-width="4" stroke-linejoin="round"/>
+                  <path d="M1150 740 q16 -12 32 0 M1156 776 q12 14 26 0" stroke="#e9e2ff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/>
+                  <!-- mug -->
+                  <path d="M1318 770 H1394 V834 Q1394 842 1386 842 H1326 Q1318 842 1318 834 Z" fill="#1d1a66" stroke="#12052b" stroke-width="5" stroke-linejoin="round"/>
+                  <path d="M1394 784 q30 4 24 28 q-6 18 -24 14" fill="none" stroke="#12052b" stroke-width="14" stroke-linecap="round"/>
+                  <path d="M1394 784 q30 4 24 28 q-6 18 -24 14" fill="none" stroke="#1d1a66" stroke-width="6" stroke-linecap="round"/>
+                  <circle cx="1356" cy="806" r="12" fill="none" stroke="#6fd7ff" stroke-width="4"/>
+                  <path d="M1362 812 l9 9" stroke="#6fd7ff" stroke-width="4" stroke-linecap="round"/>
+
+                  <!-- speaker -->
+                  <g stroke="#12052b" stroke-width="5" stroke-linejoin="round">
+                    <path d="M1510 598 L1690 590 L1690 862 L1510 868 Z" fill="#1a1050"/>
+                    <path d="M1690 590 L1704 600 L1704 852 L1690 862 Z" fill="#0d0633"/>
+                  </g>
+                  <circle cx="1600" cy="692" r="54" fill="#0a0426" stroke="#12052b" stroke-width="5"/>
+                  <circle id="spkRing" cx="1600" cy="692" r="44" fill="none" stroke="url(#gSpk)" stroke-width="11"/>
+                  <circle cx="1600" cy="692" r="30" fill="#1a1050"/>
+                  <circle cx="1600" cy="802" r="44" fill="#0a0426" stroke="#12052b" stroke-width="5"/>
+                  <circle cx="1600" cy="802" r="30" fill="#241470"/><circle cx="1600" cy="802" r="12" fill="#0a0426"/>
+                </svg>
+        <div id="floorText" role="img" aria-label="Let’s build something great with AI"></div>
+        </div>
+
+        <!-- props: wall cabinet, chair, side table -->
+        <svg class="roomsvg" viewBox="0 0 1280 1024" aria-hidden="true">
+          <defs>
+            <linearGradient id="gTableTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a52e4"/><stop offset="1" stop-color="#4a33bd"/></linearGradient>
+            <linearGradient id="gShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd0f6"/><stop offset="1" stop-color="#ff5fd8"/></linearGradient>
+            <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f86c8"/><stop offset=".5" stop-color="#e2ddff"/><stop offset="1" stop-color="#5a4e9e"/></linearGradient>
+            <linearGradient id="gChairSide" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5ce6"/><stop offset=".55" stop-color="#b52ad6"/><stop offset="1" stop-color="#5a1aa8"/></linearGradient>
+            <radialGradient id="rgCab"><stop offset="0" stop-color="#7fd8ff" stop-opacity=".22"/><stop offset="1" stop-color="#7fd8ff" stop-opacity="0"/></radialGradient>
+            <radialGradient id="gGlobeMini" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#8ff0ff"/><stop offset=".5" stop-color="#2f7dff"/><stop offset="1" stop-color="#2a1a9a"/></radialGradient>
+            <radialGradient id="rgWarm"><stop offset="0" stop-color="#ffc2f2" stop-opacity=".55"/><stop offset="1" stop-color="#ff6be0" stop-opacity="0"/></radialGradient>
+          </defs>
+
+          <!-- ===== glass collectible cabinet along the left wall (generated in one-point perspective) ===== -->
+          <defs>
+            <!-- collectibles; origin = centre of the shelf surface they stand on -->
+            <g id="fig-robot">
+              <path d="M0 -44 L0 -38" fill="none"/><circle cx="0" cy="-45" r="2" fill="#ff4be0"/>
+              <rect x="-10" y="-38" width="20" height="14" rx="4" fill="#d9d3ff"/>
+              <rect x="-7" y="-34" width="14" height="5" rx="2.5" fill="#3de0ff"/>
+              <rect x="-12" y="-23" width="24" height="15" rx="3" fill="#8f7cff"/>
+              <rect x="-4" y="-19" width="8" height="5" rx="1" fill="#ffd23b"/>
+              <rect x="-16" y="-22" width="4" height="12" rx="2" fill="#d9d3ff"/><rect x="12" y="-22" width="4" height="12" rx="2" fill="#d9d3ff"/>
+              <rect x="-9" y="-8" width="7" height="8" rx="1" fill="#5b4bc4"/><rect x="2" y="-8" width="7" height="8" rx="1" fill="#5b4bc4"/>
+            </g>
+            <g id="fig-trophy">
+              <path d="M-11 -40 H11 Q11 -24 0 -21 Q-11 -24 -11 -40 Z" fill="#ffd23b"/>
+              <path d="M-11 -36 Q-18 -36 -16 -29 Q-14 -25 -9 -26 M11 -36 Q18 -36 16 -29 Q14 -25 9 -26" fill="none" stroke-width="2"/>
+              <rect x="-2.5" y="-21" width="5" height="8" fill="#e8a91a"/>
+              <rect x="-9" y="-13" width="18" height="6" rx="1" fill="#ffd23b"/>
+              <rect x="-11" y="-7" width="22" height="7" rx="1" fill="#2a1a82"/>
+              <path d="M-6 -36 L-3 -27" stroke="#fff6c8" stroke-width="2" fill="none"/>
+            </g>
+            <g id="fig-astronaut-helmet">
+              <rect x="-11" y="-8" width="22" height="8" rx="2" fill="#2a1a82"/>
+              <circle cx="0" cy="-23" r="15" fill="#eeeaff"/>
+              <ellipse cx="2" cy="-23" rx="10" ry="8" fill="#2b1785"/>
+              <path d="M-3 -28 Q2 -31 7 -27" stroke="#9ff3ff" stroke-width="2" fill="none"/>
+              <rect x="-12" y="-11" width="24" height="4" rx="2" fill="#ff7bea"/>
+            </g>
+            <g id="fig-katana">
+              <path d="M-14 0 L-12 -14 M14 0 L12 -14" stroke-width="3" fill="none"/>
+              <path d="M-18 -14 L14 -16" stroke="#e7ecff" stroke-width="3.5" fill="none"/>
+              <path d="M10 -20 L12 -11" stroke-width="3" fill="none"/>
+              <path d="M12 -16 L20 -16.5" stroke="#ff4be0" stroke-width="3.5" fill="none"/>
+              <path d="M-18 -26 L14 -28" stroke="#e7ecff" stroke-width="3" fill="none"/>
+              <path d="M12 -28 L20 -28.5" stroke="#3de0ff" stroke-width="3" fill="none"/>
+              <rect x="-15" y="-2" width="30" height="3" rx="1.5" fill="#2a1a82"/>
+            </g>
+            <g id="fig-big-head-figure">
+              <ellipse cx="0" cy="-2" rx="11" ry="3" fill="#2a1a82"/>
+              <rect x="-7" y="-20" width="14" height="17" rx="4" fill="#ff4be0"/>
+              <circle cx="0" cy="-32" r="13" fill="#ffd6bf"/>
+              <path d="M-13 -34 Q-12 -48 0 -47 Q14 -48 13 -33 Q8 -40 0 -39 Q-8 -40 -13 -34 Z" fill="#3de0ff"/>
+              <circle cx="-5" cy="-31" r="2.2" fill="#12052b" stroke="none"/><circle cx="5" cy="-31" r="2.2" fill="#12052b" stroke="none"/>
+            </g>
+            <g id="fig-controller">
+              <path d="M-4 0 L-2 -10 M4 0 L2 -10" stroke-width="2.5" fill="none"/>
+              <path d="M-16 -18 Q-17 -30 -6 -29 H6 Q17 -30 16 -18 Q15 -10 9 -12 L5 -16 H-5 L-9 -12 Q-15 -10 -16 -18 Z" fill="#2b1f76"/>
+              <circle cx="-8" cy="-22" r="2.5" fill="#3de0ff" stroke="none"/>
+              <circle cx="8" cy="-24" r="1.7" fill="#ff4be0" stroke="none"/><circle cx="11" cy="-21" r="1.7" fill="#ffd23b" stroke="none"/><circle cx="5" cy="-21" r="1.7" fill="#3bff9a" stroke="none"/>
+              <rect x="-10" y="-2" width="20" height="3" rx="1.5" fill="#2a1a82"/>
+            </g>
+            <g id="fig-mech">
+              <rect x="-6" y="-46" width="12" height="9" rx="2" fill="#e9e4ff"/>
+              <path d="M-4 -43 H4" stroke="#ff4be0" stroke-width="2"/>
+              <path d="M-13 -36 L13 -36 L10 -20 L-10 -20 Z" fill="#5f46d6"/>
+              <path d="M-19 -36 L-13 -36 L-14 -22 L-20 -24 Z M19 -36 L13 -36 L14 -22 L20 -24 Z" fill="#e9e4ff"/>
+              <path d="M-9 -20 L-3 -20 L-4 -2 L-11 -2 Z M3 -20 L9 -20 L11 -2 L4 -2 Z" fill="#8f7cff"/>
+              <circle cx="0" cy="-29" r="3" fill="#3de0ff"/>
+              <rect x="-13" y="-3" width="26" height="3" rx="1.5" fill="#2a1a82"/>
+            </g>
+            <g id="fig-mini-dragon">
+              <path d="M-16 0 C-18 -14 -6 -18 -2 -12 C2 -6 12 -8 10 -22 C8 -30 16 -34 18 -28" fill="none" stroke="#12052b" stroke-width="7"/>
+              <path d="M-16 0 C-18 -14 -6 -18 -2 -12 C2 -6 12 -8 10 -22 C8 -30 16 -34 18 -28" fill="none" stroke="#c13cff" stroke-width="4.5"/>
+              <path d="M-4 -14 L-12 -32 L4 -20 Z" fill="#ff7bea"/>
+              <circle cx="17" cy="-29" r="1.3" fill="#ffd23b" stroke="none"/>
+            </g>
+            <g id="fig-crystal">
+              <path d="M0 -42 L10 -26 L6 -2 L-6 -2 L-10 -26 Z" fill="#7ff3ff"/>
+              <path d="M0 -42 L2 -2 M-10 -26 L10 -26" fill="none" stroke-width="1.2"/>
+              <path d="M-4 -34 L-6 -20" stroke="#fff" stroke-width="2" fill="none"/>
+              <rect x="-11" y="-3" width="22" height="3" rx="1.5" fill="#2a1a82"/>
+            </g>
+            <g id="fig-mini-knight"><g transform="scale(.78)">
+              <path d="M-5 0 L-6 -24 L-11 -28 L-9 -40 L-4 -44 L-6 -49 L0 -56 L6 -49 L4 -44 L9 -40 L11 -28 L6 -24 L5 0 Z" fill="#3b4fd8"/>
+              <ellipse cx="-13" cy="-34" rx="6" ry="11" fill="#ff4be0"/>
+              <path d="M0 -56 Q8 -66 15 -58" fill="none" stroke="#ff7bea" stroke-width="3"/>
+              <rect x="-11" y="-3" width="22" height="3" rx="1.5" fill="#2a1a82"/>
+              </g>
+            </g>
+            <g id="fig-car-model">
+              <path d="M-20 -6 L-20 -14 L-10 -16 L-4 -24 L10 -24 L16 -16 L22 -14 L22 -6 Z" fill="#ff5c7a"/>
+              <path d="M-3 -22 L9 -22 L13 -16 L-7 -16 Z" fill="#9ff3ff"/>
+              <circle cx="-11" cy="-5" r="5" fill="#12052b"/><circle cx="13" cy="-5" r="5" fill="#12052b"/>
+              <circle cx="-11" cy="-5" r="2" fill="#c9c3ff" stroke="none"/><circle cx="13" cy="-5" r="2" fill="#c9c3ff" stroke="none"/>
+            </g>
+            <g id="fig-mini-globe">
+              <path d="M0 0 L0 -10" stroke-width="3" fill="none"/>
+              <ellipse cx="0" cy="-1" rx="9" ry="2.5" fill="#2a1a82"/>
+              <circle cx="0" cy="-26" r="14" fill="url(#gGlobeMini)"/>
+              <path d="M-8 -30 q6 -6 12 -3 q3 6 -3 9 q-5 3 -9 -6z M3 -20 q6 -3 8 2 q-2 6 -7 6z" fill="#9bffd0" stroke-width="1.2"/>
+              <path d="M-15 -14 Q0 -6 15 -14" fill="none" stroke="#ffd23b" stroke-width="2"/>
+            </g>
+            <g id="fig-boxes-0">
+              <rect x="-20" y="-50" width="36" height="50" rx="2" fill="#ff4be0"/>
+              <rect x="-15" y="-43" width="26" height="30" rx="3" fill="#2b1785"/>
+              <circle cx="-2" cy="-33" r="6" fill="#ffd6bf"/><rect x="-6" y="-27" width="8" height="12" rx="2" fill="#3de0ff"/>
+              <rect x="-15" y="-10" width="26" height="5" fill="#fff" stroke="none"/>
+              <rect x="20" y="-40" width="20" height="40" rx="2" fill="#3de0ff"/>
+              <rect x="24" y="-34" width="12" height="20" rx="2" fill="#2b1785"/>
+              <rect x="26" y="-30" width="8" height="12" rx="2" fill="#ffd23b" stroke-width="1"/>
+            </g>
+            <g id="fig-boxes-1">
+              <rect x="-34" y="-46" width="30" height="46" rx="2" fill="#ffd23b"/>
+              <rect x="-29" y="-40" width="20" height="26" rx="3" fill="#2b1785"/>
+              <rect x="-24" y="-36" width="10" height="9" rx="2" fill="#d9d3ff"/><rect x="-25" y="-26" width="12" height="10" rx="2" fill="#8f7cff"/>
+              <rect x="2" y="-52" width="34" height="52" rx="2" fill="#7a5cff"/>
+              <rect x="7" y="-46" width="24" height="30" rx="3" fill="#160a47"/>
+              <path d="M19 -42 L26 -32 L22 -20 L16 -20 L12 -32 Z" fill="#7ff3ff" stroke-width="1"/>
+              <rect x="7" y="-12" width="24" height="5" fill="#fff" stroke="none"/>
+            </g>
+          </defs>
+          <g id="sideCabinet" stroke-linejoin="round"></g>
+
+          <!-- ===== racing-style gaming chair (3/4 front) ===== -->
+          <g stroke="#12052b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+            <ellipse cx="474" cy="556" rx="64" ry="8" fill="#0a0328" opacity=".45" stroke="none"/>
+            <!-- star base + casters -->
+            <g fill="none" stroke-width="7"><path d="M474 536 L418 548 M474 536 L530 546 M474 536 L444 560 M474 536 L506 562 M474 536 L476 548"/></g>
+            <g fill="none" stroke="#5b4bc4" stroke-width="2.5"><path d="M474 536 L418 548 M474 536 L530 546 M474 536 L444 560 M474 536 L506 562"/></g>
+            <g fill="#0d0633" stroke-width="2"><circle cx="417" cy="551" r="5.5"/><circle cx="531" cy="549" r="5.5"/><circle cx="443" cy="563" r="5.5"/><circle cx="507" cy="565" r="5.5"/></g>
+            <!-- gas lift -->
+            <rect x="467" y="506" width="14" height="32" rx="3" fill="url(#gMetal)"/>
+            <rect x="464" y="524" width="20" height="12" rx="3" fill="#1b0d55"/>
+            <!-- far armrest -->
+            <rect x="503" y="452" width="7" height="40" fill="#1b0d55"/>
+            <rect x="494" y="445" width="34" height="9" rx="4.5" fill="#2c1a80"/>
+            <!-- backrest shell -->
+            <path d="M432 340 Q462 330 494 342 Q504 350 506 366 L512 392 Q511 410 502 420 L500 448 Q508 462 506 480 L422 484 Q418 466 426 450 L424 422 Q414 410 414 392 L420 364 Q422 348 432 340 Z" fill="url(#gChairSide)"/>
+            <!-- centre cushion, quilted -->
+            <path d="M444 354 Q463 346 482 354 L489 400 L484 474 L442 476 L436 400 Z" fill="#1c0e55"/>
+            <g stroke="#3b2a9a" stroke-width="1.2" fill="none" opacity=".9">
+              <path d="M442 420 L486 444 M440 444 L486 468 M486 420 L442 444 M486 444 L442 468"/>
+            </g>
+            <!-- piping + wings -->
+            <path d="M444 354 Q463 346 482 354 L489 400 L484 474" fill="none" stroke="#3de0ff" stroke-width="1.6"/>
+            <path d="M436 400 L442 476" fill="none" stroke="#3de0ff" stroke-width="1.6"/>
+            <path d="M432 340 Q462 330 494 342" fill="none" stroke="#ffc6f6" stroke-width="2"/>
+            <!-- harness slots -->
+            <ellipse cx="450" cy="366" rx="3.5" ry="7" fill="#05011a" stroke-width="1.5"/>
+            <ellipse cx="477" cy="366" rx="3.5" ry="7" fill="#05011a" stroke-width="1.5"/>
+            <!-- headrest + lumbar pillows -->
+            <rect x="448" y="378" width="30" height="13" rx="6" fill="#2a1a82"/>
+            <path d="M452 384 h22" stroke="#ff7bea" stroke-width="1.5"/>
+            <rect x="442" y="440" width="44" height="17" rx="8" fill="#2a1a82"/>
+            <circle cx="464" cy="408" r="8" fill="#12052b" stroke="#ff4be0" stroke-width="2"/>
+            <path d="M465 402 L460 409 L466 409 L462 415" fill="none" stroke="#3de0ff" stroke-width="1.8"/>
+            <!-- seat -->
+            <path d="M418 480 L506 476 L534 492 L432 502 Z" fill="#241272"/>
+            <path d="M418 480 L506 476 L512 480 L424 485 Z" fill="url(#gChairSide)"/>
+            <path d="M432 502 L534 492 L534 506 L434 516 Z" fill="#160a47"/>
+            <path d="M440 494 Q480 486 524 490" fill="none" stroke="#ff4be0" stroke-width="3"/>
+            <!-- near armrest -->
+            <rect x="420" y="458" width="8" height="46" fill="#1b0d55"/>
+            <rect x="404" y="450" width="40" height="10" rx="5" fill="#3a22a8"/>
+            <path d="M408 452 h32" stroke="#a798ff" stroke-width="1.5"/>
+          </g>
+
+          <!-- ===== right side table (against the right wall) ===== -->
+          <g stroke="#12052b" stroke-width="2.5" stroke-linejoin="round">
+            <rect x="930" y="533" width="9" height="180" fill="#1b0d55"/>
+            <rect x="1096" y="530" width="9" height="160" fill="#1b0d55"/>
+            <rect x="1007" y="584" width="14" height="220" fill="#241470"/>
+            <rect x="1196" y="584" width="14" height="220" fill="#241470"/>
+            <path d="M928 521 L1100 521 L1220 569 L1005 569 Z" fill="url(#gTableTop)"/>
+            <path d="M1005 569 L1220 569 L1220 586 L1005 586 Z" fill="#2c1880"/>
+            <path d="M928 521 L1005 569 L1005 586 L928 534 Z" fill="#221066"/>
+            <path d="M1008 572 L1218 572" stroke="#b3a6ff" stroke-width="2" fill="none"/>
+            <path d="M1012 590 L1214 590" stroke="#3de0ff" stroke-width="3" fill="none"/>
+            <path d="M1012 590 L1214 590" stroke="#3de0ff" stroke-width="12" fill="none" opacity=".2"/>
+          </g>
+          <!-- lamp (right table) -->
+          <ellipse cx="1150" cy="460" rx="110" ry="90" fill="url(#rgWarm)"/>
+          <g stroke="#12052b" stroke-width="3" stroke-linejoin="round">
+            <ellipse cx="1150" cy="552" rx="26" ry="7" fill="#2a1a82"/>
+            <rect x="1146" y="448" width="8" height="104" fill="#6a45d8"/>
+            <path d="M1116 452 L1184 452 L1172 412 L1128 412 Z" fill="url(#gShade)"/>
+            <path d="M1118 452 L1182 452" stroke="#fff" stroke-width="3"/>
+          </g>
+          <!-- standing books (right table, against the wall) -->
+          <g stroke="#12052b" stroke-width="2.5" stroke-linejoin="round">
+            <rect x="1190" y="488" width="14" height="62" fill="#ffd23b"/>
+            <path d="M1206 550 L1204 494 L1218 492 L1222 550 Z" fill="#3bff9a"/>
+          </g>
+        </svg>
+
+        <div class="rig" id="rigFront">
+          <div class="ellipse ring" id="ring1"></div>
+          <div class="ellipse ring" id="ring2"></div>
+          <div class="ellipse" id="aura"></div>
+          <div class="ellipse" id="shadow"></div>
+          <div class="ellipse" id="dust"></div>
+          <div class="sprite" id="sprRun" role="img" aria-label="Ninja running"></div>
+          <div class="sprite" id="sprIdle" role="img" aria-label="Ninja standing on the desk"></div>
+          <div class="hop" id="sprBack" aria-hidden="true"></div>
+        </div>
+        <div class="hopwrap" id="hopRoom"></div>
+        <!-- shelf lips/undersides, drawn over the ninja so it stands *behind* the shelf edge -->
+        <svg class="roomsvg" viewBox="0 0 1280 1024" aria-hidden="true"><g id="shelfFront"></g></svg>
+      </div>
+
+      <!-- ===== foreground: character stepping onto a futuristic wall (depth 1.15) =====
+           back leg goes down behind the wall; hand + front shoe are re-drawn on top so they sit above it -->
+      <div class="layer" id="Lfront">
+        <img id="character" src="assets/character.webp" alt="Manish Yadav" draggable="false">
+        <svg class="roomsvg" viewBox="0 0 1280 1024" aria-hidden="true">
+          <defs>
+            <linearGradient id="gLedge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a36c4"/><stop offset="1" stop-color="#8f7cff"/></linearGradient>
+            <linearGradient id="gFace" gradientUnits="userSpaceOnUse" x1="0" y1="708" x2="0" y2="800"><stop offset="0" stop-color="#22106e"/><stop offset="1" stop-color="#1a0b56"/></linearGradient>
+            <pattern id="hex" width="30" height="52" patternUnits="userSpaceOnUse">
+              <path d="M15 0 L30 8.7 L30 26 L15 34.7 L0 26 L0 8.7 Z M15 34.7 L15 52" fill="none" stroke="#7a66ff" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <!-- ledge (top surface) -->
+          <rect x="-1600" y="685" width="4500" height="24" fill="url(#gLedge)"/>
+          <rect x="-1600" y="685" width="4500" height="1.5" fill="#12052b" opacity=".7"/>
+          <path d="M-1600 692 H2900" stroke="#b9adff" stroke-width="1" opacity=".35"/>
+          <ellipse cx="902" cy="702" rx="36" ry="4.5" fill="#0a0328" opacity=".55"/>
+          <!-- face -->
+          <rect x="-1600" y="708" width="4500" height="1200" fill="url(#gFace)"/>
+          <g id="faceHex"></g>
+          <g id="facePanels"></g>
+          <rect x="-1600" y="700" width="4500" height="20" fill="#3de0ff" opacity=".18"/>
+          <rect x="-1600" y="707" width="4500" height="4" fill="#9ff3ff"/>
+          <rect x="-1600" y="756" width="4500" height="14" fill="#ff4be0" opacity=".16"/>
+          <rect x="-1600" y="761" width="4500" height="3" fill="#ff7bea"/>
+        </svg>
+        <img id="front" src="assets/character-front.webp" alt="" draggable="false">
+        <!-- wind pieces (hair, sleeve, hem) are canvases inserted here by the script -->
+        <!-- the card is a thin glass slab: its top and side faces are drawn here (perspective, updated per frame) -->
+        <svg class="roomsvg" viewBox="0 0 1280 1024" aria-hidden="true" id="cardSlab" style="opacity:0">
+          <defs>
+            <linearGradient id="gSlabTop" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0" stop-color="#b3a2ff" stop-opacity=".62"/><stop offset="1" stop-color="#6e52f2" stop-opacity=".55"/>
+            </linearGradient>
+            <linearGradient id="gSlabSide" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#3a1fb4" stop-opacity=".78"/><stop offset="1" stop-color="#1f0d6e" stop-opacity=".82"/>
+            </linearGradient>
+          </defs>
+          <polygon id="slabTop" fill="url(#gSlabTop)" stroke="rgba(214,200,255,.75)" stroke-width="1.4" stroke-linejoin="round"/>
+          <polygon id="slabSide" fill="url(#gSlabSide)" stroke="rgba(196,178,255,.6)" stroke-width="1.4" stroke-linejoin="round"/>
+          <line id="slabSheen" stroke="#fff" stroke-opacity=".35" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div class="card" id="card">
+          <div class="card-title">Hello, I am Manish Yadav</div>
+          <div class="card-sub">
+            <span class="rec">Play experience designer</span>
+          </div>
+        </div>
+        <div class="hopwrap" id="hopFront"></div>
+      </div>
+    </div><!-- /cam -->
+
+    <div class="ov" id="vignette"></div>
+    <div class="ov" id="grain"></div>
+    <div class="ov" id="flash"></div>
+
+      </div>
+
+<!-- ===================== the wall between the scenes: digital board with education & experience ===================== -->
+<section id="eduBand" aria-labelledby="eduTitle">
+  <!-- resume board: tap it and the resume (assets/ManishYadav_Resume26.pdf) opens over the page (js/book.js openPdf) -->
+  <div class="board board-resume" id="resumeBoard" role="button" tabindex="0" aria-label="Resume: open Manish Yadav's resume">
+    <div class="board-badge">RESUME</div>
+    <div class="board-screen">
+      <ul class="board-track">
+        <li style="--col:#ffe27a"><b>CV</b>Tap to open my resume</li>
+        <li style="--col:#ff9cf2"><b>PDF</b>Manish Yadav · Play experience designer</li>
+      </ul>
+    </div>
+    <i class="bolt b1"></i><i class="bolt b2"></i><i class="bolt b3"></i><i class="bolt b4"></i>
+  </div>
+  <div class="board">
+    <div class="board-badge" id="eduTitle">EDUCATION<br>&amp; EXPERIENCE</div>
+    <div class="board-screen">
+      <ul class="board-track">
+        <li style="--col:#7ff3ff"><b>EDU</b>B.Tech Computer Science (SPPU)</li>
+        <li style="--col:#7ff3ff"><b>EDU</b>M.Des in Game Design (NID)</li>
+        <li style="--col:#ff9cf2"><b>WORK</b>Ed-tech Industry</li>
+        <li style="--col:#ff9cf2"><b>WORK</b>Facilitation / Workshops</li>
+      </ul>
+    </div>
+    <i class="bolt b1"></i><i class="bolt b2"></i><i class="bolt b3"></i><i class="bolt b4"></i>
+  </div>
+  <!-- second board: AI skills (scrolls the other way) -->
+  <div class="board board-ai" aria-label="AI skills">
+    <div class="board-badge">AI<br>SKILLS</div>
+    <div class="board-screen">
+      <ul class="board-track" data-dir="-1">
+        <li style="--col:#9dffcf"><b>AI</b>Claude Code / Cowork</li>
+        <li style="--col:#9dffcf"><b>AI</b>Gemini</li>
+        <li style="--col:#9dffcf"><b>AI</b>OpenArt</li>
+        <li style="--col:#9dffcf"><b>AI</b>Midjourney</li>
+        <li style="--col:#9dffcf"><b>AI</b>ChatGPT</li>
+        <li style="--col:#9dffcf"><b>AI</b>Grok AI</li>
+        <li style="--col:#c9b6ff"><b>AI</b>AI art generation</li>
+        <li style="--col:#c9b6ff"><b>AI</b>Prompting and spec writing</li>
+        <li style="--col:#c9b6ff"><b>AI</b>Game building with Claude</li>
+      </ul>
+    </div>
+    <i class="bolt b1"></i><i class="bolt b2"></i><i class="bolt b3"></i><i class="bolt b4"></i>
+  </div>
+</section>
+
+  <section id="vrStage" aria-label="Projects: cards revolving around the VR character. Tap a card to open it.">
+    <canvas id="space" aria-hidden="true"></canvas>
+    <div id="vrWorld">
+
+      <div id="v2Sparkles" aria-hidden="true"></div>
+      <img id="vrChar" src="assets/vr-character.webp" alt="Manish wearing a VR headset" draggable="false">
+      <div id="ringA" class="orbit"></div>
+      <div id="ringB" class="orbit"></div>
+      <img id="vrConsole" src="assets/vr-console.webp" alt="" draggable="false">
+      <div id="cartLabel" aria-hidden="true"><span>MANISH</span><b>PORTFOLIO · PROJECTS</b></div>
+      <div id="consoleScreen" aria-live="polite">
+        <div class="cs-top">NOW VIEWING</div>
+        <div class="cs-title" id="csTitle">—</div>
+        <div class="cs-hint">TAP A CARD ▸</div>
+      </div>
+
+    </div>
+
+    <div id="vrFacade" aria-hidden="true">
+      <div class="fc fc-top"></div><div class="fc fc-left"></div><div class="fc fc-right"></div><div class="fc fc-bottom"></div>
+      <div class="rv rv-top"></div><div class="rv rv-bottom"></div><div class="rv rv-left"></div><div class="rv rv-right"></div>
+      <div class="edge"></div>
+    </div>
+
+    <!-- cassettes on the front half of the orbit live here: in front of the building wall -->
+    <div id="vrFront"></div>
+
+    <!-- project details (opens when a card is tapped) -->
+    <div id="cardPanel" role="dialog" aria-modal="true" aria-labelledby="cpTitle" hidden>
+      <div class="cp-box">
+        <button class="cp-close" type="button" aria-label="Close">×</button>
+        <div class="cp-kicker" id="cpKicker">PROJECT</div>
+        <h2 id="cpTitle">—</h2>
+        <p id="cpBody">Project details coming soon.</p>
+      </div>
+    </div>
+  </section>
+  <!-- the handheld: another universe below the building. A tapped project cassette falls in here -->
+  <section id="hhStage" aria-label="Handheld console: tap a project cassette above and it drops in here">
+    <canvas id="hhWorld" aria-hidden="true"></canvas>
+    <svg id="hhFrame" aria-hidden="true"></svg>
+    <div id="hhRig"><div id="hhShake">
+      <div id="hhSlot" aria-hidden="true"></div>
+      <img id="hhArt" src="assets/handheld.webp" alt="Two hands holding a handheld game console" draggable="false">
+      <button id="hhScreen" type="button" aria-live="polite">
+        <span class="hs-kick">INSERT A CASSETTE</span><span class="hs-title">Tap a project above</span><span class="hs-hint">▲ SCROLL UP</span>
+      </button>
+      <div id="hhNinja" class="hop" aria-hidden="true"></div>
+    </div></div>
+    <nav id="hhNav" aria-label="Project worlds">
+      <button type="button" class="hn-prev" aria-label="Previous project world">◀</button>
+      <span class="hn-label"><b id="hnIdx">01</b> / <span id="hnCount">10</span> · <span class="hn-hint">scroll for more worlds</span></span>
+      <button type="button" class="hn-next" aria-label="Next project world">▶</button>
+    </nav>
+    <div id="hhGame"></div>
+    <div id="hhBook" tabindex="-1" role="dialog" aria-label="Design document" hidden>
+      <div class="bk-bar"><span class="bk-title"></span><span class="bk-count" aria-live="polite"></span><button type="button" class="bk-close" aria-label="Close the book and go back to the game">×</button></div>
+      <div class="bk-stage">
+        <div class="bk-book">
+          <div class="bk-pg bk-l empty"></div><div class="bk-pg bk-r empty"></div>
+          <div class="bk-leaf" hidden><div class="bk-pg bk-front"></div><div class="bk-pg bk-back"></div></div>
+        </div>
+        <div class="bk-msg" hidden></div>
+      </div>
+      <button type="button" class="bk-nav bk-prev" aria-label="Previous page">◀</button>
+      <button type="button" class="bk-nav bk-next" aria-label="Next page">▶</button>
+    </div>
+    <div id="hhSite" tabindex="-1" role="dialog" aria-label="Design document" hidden>
+      <div class="bk-bar"><span class="bk-title"></span><a class="st-ext" target="_blank" rel="noopener">open in new tab ↗</a><button type="button" class="bk-close" aria-label="Close the design document and go back to the game">×</button></div>
+      <div class="st-frame"><iframe title="Design document" loading="lazy"></iframe><div class="bk-msg">Loading the design document…</div></div>
+    </div>
+    <button id="hhCart" type="button" hidden><span class="hc-cap">DESIGN
+DOC ↗</span></button>
+    <button id="hhExit" type="button" aria-label="Close the game and bring the handheld back" hidden>×</button>
+  </section>
+    </div>
+
+    <div id="hint" aria-hidden="true"><i></i><span>Scroll</span></div>
+    <div id="bar" aria-hidden="true"><b></b></div>
+    <div id="dbg"></div>
+  </section>
+</div>
+
+<!-- ===== art gallery: after the project worlds the pinned stage scrolls away and the gallery hall comes up ===== -->
+<section id="gallery" aria-labelledby="galTitle">
+  <div class="gal-pin" id="galPin">
+    <canvas class="gal-cv" id="galCv" aria-hidden="true"></canvas>
+    <ul class="gal-list" id="galList" aria-label="Artworks in the gallery"></ul>
+    <div class="gal-shadow" id="galShadow" aria-hidden="true"></div>
+    <div class="hop" id="galNinja" aria-hidden="true"></div>
+    <header class="gal-hud">
+      <h2 id="galTitle" class="gal-hud-title">ART GALLERY</h2>
+      <p class="gal-hud-count" id="galCount" aria-live="polite"></p>
+      <p class="gal-hud-hint" id="galHint">Scroll to walk in · tap an artwork to look closer</p>
+    </header>
+  </div>
+</section>
+<div id="galBox" role="dialog" aria-modal="true" aria-label="Artwork viewer" hidden>
+  <figure class="gb-fig"><img class="gb-img" alt=""><figcaption class="gb-cap"></figcaption></figure>
+  <button type="button" class="gb-btn gb-prev" aria-label="Previous artwork">◀</button>
+  <button type="button" class="gb-btn gb-next" aria-label="Next artwork">▶</button>
+  <button type="button" class="gb-close" aria-label="Close the artwork viewer">×</button>
+</div>
+
+
+
+<!-- ===== quick navigation: jump to the cassette ring, the first project world or the art gallery ===== -->
+<nav id="qnav" aria-label="Quick navigation">
+  <button type="button" class="qn" data-go="resume"><b>Resume</b><s></s></button>
+  <button type="button" class="qn" data-go="ring"><b>All projects</b><s></s></button>
+  <button type="button" class="qn" data-go="first"><b>AI projects</b><s></s></button>
+  <button type="button" class="qn" data-go="gallery"><b>Art gallery</b><s></s></button>
+  <button type="button" class="qn" data-go="contact" aria-haspopup="dialog"><b>Contact</b><s></s></button>
+</nav>
+<div id="qnFade" aria-hidden="true"></div>
+<!-- contact: three neon tiles over a tiled backdrop (js/qnav.js opens it from the Contact button) -->
+<div id="contactBox" role="dialog" aria-modal="true" aria-labelledby="ctTitle" hidden>
+  <div class="ct-panel">
+    <button type="button" class="ct-close" aria-label="Close contact details">×</button>
+    <h2 id="ctTitle">Contact</h2>
+    <p class="ct-sub">Let's build something great together</p>
+    <div class="ct-tiles">
+      <button type="button" class="ct-tile" id="ctPhone" data-copy="+91 9403926972" style="--tc:#3de0ff">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3h3l1.5 4.5-2.2 1.4a12 12 0 0 0 6.2 6.2l1.4-2.2L21 14.4v3A2.6 2.6 0 0 1 18.4 20 15.4 15.4 0 0 1 4 5.6 2.6 2.6 0 0 1 6.6 3z"/></svg>
+        <span class="ct-k">Phone</span><span class="ct-v">+91 9403926972</span><span class="ct-h" aria-live="polite">Tap to copy</span>
+      </button>
+      <a class="ct-tile" href="mailto:yadavmanish5493@gmail.com" style="--tc:#ff4be0">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>
+        <span class="ct-k">Email</span><span class="ct-v">yadavmanish5493@<wbr>gmail.com</span><span class="ct-h">Tap to write a mail</span>
+      </a>
+      <a class="ct-tile" href="https://www.linkedin.com/in/manish-yadav-627458120/" target="_blank" rel="noopener" style="--tc:#ffd27a">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3.5"/><path d="M8 10.5V17M8 7.4v.1M11.5 17v-6.5M11.5 13.2c0-1.6 1.2-2.7 2.6-2.7s2.4 1 2.4 2.7V17"/></svg>
+        <span class="ct-k">LinkedIn</span><span class="ct-v">Manish Yadav</span><span class="ct-h">Tap to open the profile ↗</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="js/page.js"></script>
+<script src="js/room.js"></script>
+<script src="js/vr.js"></script>
+<script src="js/facade.js"></script>
+<script src="js/vfx.js"></script>
+<script src="js/book.js"></script>
+<script src="js/handheld.js"></script>
+<script src="js/gallery.js"></script>
+<script src="js/qnav.js"></script>
+</body>
+</html>

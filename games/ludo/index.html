@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ludo 2.0: redesigned Ludo</title>
+<meta name="description" content="A playable version of the redesigned Ludo (chowka-bara): an underwater wheel board with two circles, pipelines, reverse stars and pearls. Play with 2, 3 or 4 players.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<script>
+/* embedded in the portfolio's handheld: ?embed, &bg (attract view only, no UI), &inset=<px> (keep UI clear of the pillars) */
+(function () { const Q = new URLSearchParams(location.search), h = document.documentElement;
+  if (Q.has('embed')) h.classList.add('embed'); if (Q.has('bg')) h.classList.add('bgonly');
+  h.style.setProperty('--ix', (parseFloat(Q.get('inset')) || 0) + 'px'); })();
+</script>
+<style>
+:root{--ix:0px;--top:0px;--ink:#0d4a63;--deep:#07354a;--sea:#bfeaf8;--gold:#ffc940;--pink:#ff5a8a;--panel:rgba(255,255,255,.86)}
+html.embed{--top:24px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#7fd2f2;color:var(--ink);font:600 clamp(11px,min(1.5vw,2.5vh),16px)/1.3 Fredoka,ui-rounded,system-ui,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+.hd{font-family:Bangers,Impact,sans-serif;letter-spacing:.06em;font-weight:400}
+.btn{font-family:Bangers,Impact,sans-serif;letter-spacing:.07em;font-size:1.5em;background:var(--gold);color:#4a2a00;border-radius:.7em;padding:.3em 1.1em .25em;box-shadow:0 .2em 0 #b3761a,0 .45em .7em #0004;transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(1.07)}.btn:active{transform:translateY(.16em);box-shadow:0 .04em 0 #b3761a,0 .2em .4em #0004}
+.btn.alt{background:#fff;color:var(--ink);box-shadow:0 .2em 0 #8cc3d8,0 .45em .7em #0003}
+.btn.sm{font-size:1.1em;padding:.25em .8em .2em}
+
+/* ---------- in-game chrome ---------- */
+#ui{position:fixed;inset:0;z-index:5;pointer-events:none;display:none}
+body.play #ui{display:block}
+#ui>*{pointer-events:auto}
+#topbar{position:absolute;left:calc(var(--ix) + 7em);right:calc(var(--ix) + 4em);top:calc(var(--top) + .5em);display:flex;align-items:center;justify-content:center;gap:.8em;pointer-events:none}
+#topbar>*{pointer-events:auto}
+#topbar .hd{font-size:1.45em;color:#fff;text-shadow:0 .08em 0 #0d4a63,0 0 .6em #0d4a63a0;white-space:nowrap}
+.tb{font-size:.78em;font-weight:700;background:var(--panel);border-radius:2em;padding:.25em .9em;box-shadow:0 .15em 0 #8cc3d8;white-space:nowrap}
+.tb:hover{background:#fff}
+#players{position:absolute;left:calc(var(--ix) + .8em);top:calc(var(--top) + 3.2em);bottom:.8em;width:12.5em;display:flex;flex-direction:column;justify-content:center;gap:.5em;pointer-events:none}
+.pc{pointer-events:auto;display:grid;grid-template-columns:2.6em 1fr;align-items:center;gap:0 .6em;padding:.4em .6em;border-radius:1em;background:var(--panel);border:.2em solid transparent;box-shadow:0 .2em 0 #8cc3d8;transition:transform .25s,border-color .25s,box-shadow .25s}
+.pc img{grid-row:1/3;width:2.6em;height:2.6em;object-fit:contain}
+.pc b{font-family:Bangers,Impact,sans-serif;font-weight:400;letter-spacing:.06em;font-size:1.15em;line-height:1;display:flex;gap:.4em;align-items:center}
+.pc b small{font:700 .6em Fredoka,sans-serif;letter-spacing:.08em;background:var(--ink);color:#fff;border-radius:1em;padding:.1em .6em}
+.pc .pips{display:flex;gap:.25em;margin-top:.15em}
+.pc .pips i{width:.8em;height:.8em;border-radius:50%;border:.15em solid var(--ink);background:#fff}
+.pc .pips i.b{background:#cfe9f3}.pc .pips i.p{background:var(--c)}.pc .pips i.d{background:var(--gold);border-color:#b3761a}
+.pc.on{transform:translateX(.35em) scale(1.04);border-color:var(--c);box-shadow:0 0 1.2em var(--c),0 .2em 0 #8cc3d8}
+#side{position:absolute;right:calc(var(--ix) + .8em);top:calc(var(--top) + 3.2em);bottom:.8em;width:12.5em;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.7em;pointer-events:none}
+#side>*{pointer-events:auto}
+#turn{font-family:Bangers,Impact,sans-serif;letter-spacing:.06em;font-size:1.4em;text-align:center;color:#fff;text-shadow:0 .08em 0 var(--deep),0 0 .6em var(--deep)}
+#die{--c:#e8180c;width:5.2em;height:5.2em;border-radius:1.1em;background:linear-gradient(145deg,#fff,#e5f4fa);border:.22em solid var(--c);box-shadow:0 .3em 0 #8cc3d8,0 .6em 1em #0005;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:.55em;transition:transform .1s;position:relative}
+#die b{border-radius:50%;margin:12%;background:transparent}
+#die b.on{background:var(--deep);box-shadow:inset 0 -.12em 0 #0008}
+#die.ready{animation:pulse 1s ease-in-out infinite;cursor:pointer}
+#die.ready::after{content:"TAP TO ROLL";position:absolute;left:50%;bottom:-1.6em;transform:translateX(-50%);font:700 .7em Fredoka;letter-spacing:.12em;color:#fff;text-shadow:0 .1em 0 var(--deep);white-space:nowrap}
+#die.roll{animation:wob .12s linear infinite}
+@keyframes pulse{50%{transform:scale(1.1);box-shadow:0 .3em 0 #8cc3d8,0 0 1.6em var(--c)}}
+@keyframes wob{0%{transform:rotate(-12deg) scale(1.06)}50%{transform:rotate(10deg) scale(.96)}100%{transform:rotate(-12deg) scale(1.06)}}
+#msg{min-height:2.6em;max-width:12em;text-align:center;font-size:.95em;color:#fff;text-shadow:0 .08em 0 var(--deep),0 0 .5em var(--deep);margin-top:.9em}
+#log{font-size:.72em;font-weight:500;max-width:15em;text-align:center;color:#eaf9ff;text-shadow:0 .08em 0 var(--deep);opacity:.9;line-height:1.35}
+html.stack #players{left:calc(var(--ix) + .5em);right:calc(var(--ix) + .5em);width:auto;top:calc(var(--top) + 2.9em);bottom:auto;flex-direction:row;justify-content:center;gap:.3em}
+html.stack .pc{grid-template-columns:1fr;padding:.25em .4em;text-align:center;flex:1;max-width:6.5em}
+html.stack .pc img{display:none}
+html.stack .pc b{justify-content:center;font-size:.95em}
+html.stack .pc b small{display:none}
+html.stack .pc .pips{justify-content:center}
+html.stack #side{left:calc(var(--ix) + .5em);right:calc(var(--ix) + .5em);width:auto;top:auto;bottom:.5em;flex-direction:row;justify-content:center;gap:1em;height:6.2em}
+html.stack #turn{font-size:1.1em;max-width:8em}
+html.stack #msg{margin:0;max-width:9em;font-size:.85em}
+html.stack #log{display:none}
+html.stack #die{width:4.4em;height:4.4em}
+html.stack #die.ready::after{display:none}
+
+/* ---------- screens: setup, rules, win ---------- */
+.scr{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:calc(var(--top) + 2.8em) calc(var(--ix) + .8em) .8em;background:rgba(7,53,74,.55);backdrop-filter:blur(3px)}
+.scr.show{display:flex}
+.card{background:#f4fcff;border:.25em solid #5cc7ea;border-radius:1.4em;box-shadow:0 .4em 0 #3b9fc4,0 1em 2em #0006;padding:1em 1.4em 1.1em;max-width:min(46em,100%);max-height:100%;overflow:auto;text-align:center}
+.card h1{font-size:2.4em;line-height:.95;color:var(--ink)}
+.card h1 b{color:#e8180c;font-weight:400}
+.card .sub{font-size:.85em;letter-spacing:.12em;text-transform:uppercase;color:#4a8fa9;margin:.2em 0 .7em}
+.card h2{font-size:1.4em;margin:.5em 0 .3em;color:var(--ink)}
+#cnt{display:flex;gap:.7em;justify-content:center}
+.cn{width:7em;padding:.5em .3em .4em;border-radius:1em;border:.2em solid #b9e1f0;background:#fff;transition:transform .15s,border-color .15s,box-shadow .15s}
+.cn:hover{transform:translateY(-.15em)}
+.cn.on{border-color:var(--pink);box-shadow:0 0 1em #ff5a8a80;transform:translateY(-.15em)}
+.cn svg{width:4.2em;height:4.2em;display:block;margin:0 auto}
+.cn b{display:block;font-family:Bangers,Impact,sans-serif;font-weight:400;font-size:1.5em;letter-spacing:.06em;line-height:1}
+.cn small{font-size:.72em;color:#4a8fa9}
+#seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:.5em;margin:.2em 0 .8em}
+.seat{display:grid;grid-template-columns:2.4em 1fr;align-items:center;gap:0 .5em;padding:.35em .6em;border-radius:1em;background:#fff;border:.18em solid var(--c);text-align:left}
+.seat img{grid-row:1/3;width:2.4em;height:2.4em;object-fit:contain}
+.seat b{font-family:Bangers,Impact,sans-serif;font-weight:400;letter-spacing:.06em;font-size:1.1em;line-height:1}
+.seat button{justify-self:start;font-size:.72em;font-weight:700;letter-spacing:.08em;border-radius:2em;padding:.15em .9em;background:var(--ink);color:#fff}
+.seat button.cpu{background:#8aa5b3}
+.row{display:flex;gap:.7em;justify-content:center;flex-wrap:wrap}
+#rules .card{text-align:left;max-width:min(52em,100%)}
+#rules h1{text-align:center;font-size:2em}
+#rules h2{font-size:1.25em;margin:.7em 0 .2em;color:#e8180c}
+#rules p,#rules li{font-weight:500;font-size:.95em;line-height:1.45;color:#1f5a73}
+#rules p{margin:.4em 0}
+#rules ul{margin:.2em 0 .4em 1.3em}
+.key{display:flex;gap:.8em;margin:.4em 0;flex-wrap:wrap}
+.key div{flex:1;min-width:8em;text-align:center;background:#e9f6fb;border:.15em solid #5cc7ea;border-radius:.8em;padding:.4em;font-size:.85em}
+.key img{height:3.6em;display:block;margin:0 auto .2em}
+.key img.pp{filter:none}
+#rules figure{margin:.5em 0;text-align:center}#rules figure img{max-width:100%;max-height:15em;border:.12em solid #b9e1f0;border-radius:.6em}
+#rules .hl{background:#fff6d1;border-radius:.6em;padding:.4em .7em;margin:.4em 0}
+#win .card{max-width:30em}
+#win h1{font-size:2.8em}
+#win .big{display:block;width:5em;height:5em;object-fit:contain;margin:0 auto}
+#win p{font-weight:500;margin:.3em 0 .8em}
+/* attract title */
+#attract{display:none;position:fixed;z-index:3;left:calc(var(--ix) + 1em);top:calc(var(--top) + 3.8em);max-width:40%;padding:.5em .9em .6em;border-radius:1em;background:rgba(255,255,255,.92);border:.16em solid #e8180c;box-shadow:0 .3em 0 rgba(0,0,0,.18);pointer-events:none}
+#attract h1{font-size:clamp(1.4em,3.8vw,2.6em);line-height:.95;color:var(--ink)}
+#attract h1 b{color:#e8180c;font-weight:400}
+#attract p{font-size:.78em;letter-spacing:.14em;color:#4a8fa9;margin-top:.3em;text-transform:uppercase;font-weight:700}
+html.bgonly #attract{display:block}
+html.bgonly #ui,html.bgonly .scr{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="attract"><h1 class="hd">Ludo <b>2.0</b></h1><p>Redesigned Ludo &middot; press the screen to play</p></div>
+
+<div id="ui">
+  <div id="topbar"><span class="hd">Ludo 2.0</span><button class="tb" id="bRules">? RULES</button><button class="tb" id="bSnd">&#9834; SOUND</button><button class="tb" id="bMenu">&#8634; NEW GAME</button></div>
+  <aside id="players"></aside>
+  <aside id="side"><div id="turn"></div><button id="die" aria-label="Roll the die"></button><div id="msg"></div><div id="log"></div></aside>
+</div>
+
+<div class="scr" id="setup"><div class="card">
+  <h1 class="hd">Ludo <b>2.0</b></h1>
+  <div class="sub">Redesigned Ludo &middot; Chowka Bara</div>
+  <h2 class="hd">How many players?</h2>
+  <div id="cnt"></div>
+  <h2 class="hd">Who plays?</h2>
+  <div id="seats"></div>
+  <div class="row"><button class="btn" id="bStart">START GAME</button><button class="btn alt" id="bRules2">RULES</button></div>
+</div></div>
+
+<div class="scr" id="rules"><div class="card">
+  <h1 class="hd">Rules</h1>
+  <h2 class="hd">Key</h2>
+  <div class="key"><div><img src="img/x-step.png" alt=""><b>Pipeline step</b><br>land here to slip into the pipe</div><div><svg viewBox="0 0 40 52" style="height:3.6em;display:block;margin:0 auto .2em"><ellipse cx="20" cy="10" rx="11" ry="3.6" fill="none" stroke="#7d8a94" stroke-width="3"/><path d="M20 46C16 38 9.5 32 9.5 24a10.5 10.5 0 0 1 21 0C30.5 32 24 38 20 46z" fill="#e4eaef" stroke="#4d5e6b" stroke-width="1.5"/><circle cx="20" cy="24" r="6" fill="#e8180c"/><ellipse cx="20" cy="46" rx="11" ry="4.5" fill="#a8140a"/></svg><b>Reverse piece</b><br>the pin wearing a halo</div><div><img src="img/pipe.png" alt=""><b>Pipeline</b><br>takes you to the inner circle</div></div>
+  <h2 class="hd">Components</h2>
+  <ul><li>16 pieces: 4 of each colour.<br>3 stars walk as per track direction. 1 reverse star walks anticlockwise and clockwise, irrespective of track direction, in the first circle.</li><li>Play board.</li><li>Dice of 6 numbers.</li></ul>
+  <h2 class="hd">Setup</h2>
+  <p>Each player chooses one of the 4 colours (green, yellow, red or blue) and places the 4 pieces of that colour near the corresponding starting circle. A single die is thrown to determine movement. A player must throw a 6 or 1 to move a piece from the starting circle onto the first circle on the track. All the block coloured steps in the layout are safe zones.</p>
+  <h2 class="hd">Rules</h2>
+  <p>Players take turns in a clockwise order; highest throw of the die starts.</p>
+  <p>Each throw, the player decides which star to move. A star simply moves along the track direction (the arrows on the board) around the first track by the number thrown. If no star can legally move according to the number thrown, play passes to the next player.</p>
+  <p>After completing its first track, the star enters the second track from the bridge of its own colour. A star moves around the second track in the same way, by the number thrown.</p>
+  <p>A throw of 6 gives another turn.</p>
+  <p>If a piece lands on a piece of a different colour, the piece jumped upon is returned to its starting circle.</p>
+  <p>If a piece lands on a pipeline then it directly moves to the inner circle. It's a one way movement.</p>
+  <h2 class="hd">Winning</h2>
+  <p>When a piece has circumnavigated the board, it proceeds up the Home circle with pearls. A star can only be moved onto the home triangle by an exact throw.</p>
+  <p>The first player to move all 4 pieces into the home triangle wins.</p>
+  <h2 class="hd">Boards for 2, 3 and 4 players</h2>
+  <p>The board can be played with 2, 3 and 4 players as the outer and inner circle steps are divisible by 2, 3 and 4. Attachments are placed on top of the main board as per the playing members.</p>
+  <figure><img src="img/attachments.png" alt="Main board and the 2, 3 and 4 player attachments"></figure>
+  <h2 class="hd">How this version counts</h2>
+  <div class="hl"><p>The outer circle has 48 steps and the inner circle 24. A piece enters by its own colour block, walks the whole outer circle, steps over its coloured bridge, walks the whole inner circle and climbs its colour lane to the pearl. The coloured bridge and lane blocks count as steps. A reverse star may go either way round on the outer circle and takes its bridge after a full lap either way. The four pipeline steps on the outer circle lead to the inner circle.</p></div>
+  <div class="row" style="margin-top:.8em"><button class="btn" id="bRulesClose">GOT IT</button></div>
+</div></div>
+
+<div class="scr" id="win"><div class="card">
+  <img class="big" id="winImg" alt="">
+  <h1 class="hd" id="winT"></h1>
+  <p id="winP"></p>
+  <div class="row"><button class="btn" id="bAgain">PLAY AGAIN</button><button class="btn alt" id="bChange">CHANGE PLAYERS</button></div>
+</div></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const HTML = document.documentElement, Q = new URLSearchParams(location.search);
+const SPEED = Math.min(8, Math.max(.5, parseFloat(Q.get('speed')) || 1));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const D2R = Math.PI / 180, mod = (a, n) => ((a % n) + n) % n;
+
+/* ---------- the board, measured from the final board slide ---------- */
+// angles run clockwise on screen from east. outer circle 48 steps (7.5 deg), inner circle 24 steps (15 deg)
+const OUT_R = 216, OUT_A = 193, OUT_B = 240, IN_R = 140, IN_A = 122, IN_B = 157, BR_R = 175, HOME_R = [103, 86, 70], CEN_R = 26, DISC_R = 60, BOWL_R = 315, HOUSE = 44;
+const COL = { red: '#e8180c', yellow: '#f2e200', green: '#0a6a0a', blue: '#0a2f7a' };
+const LITE = { red: '#ff6a5a', yellow: '#ffe84a', green: '#52d452', blue: '#5b8cff' };
+const NAME = { red: 'RED', yellow: 'YELLOW', green: 'GREEN', blue: 'BLUE' };
+// colours per player count, in clockwise turn order, with the angle of each colour's arm (attachments are 180, 120 or 90 degrees apart)
+const MODES = { 2: [['red', 225], ['green', 45]], 3: [['red', 225], ['green', 345], ['yellow', 105]], 4: [['red', 225], ['yellow', 315], ['green', 45], ['blue', 135]] };
+const XSTEPS = [0, 12, 24, 36];                         // outer steps that hold a pipeline
+const pt = (deg, r) => [r * Math.cos(deg * D2R), r * Math.sin(deg * D2R)];
+
+/* ---------- sprites cut out of the slides ---------- */
+const IMG = {};
+['red', 'yellow', 'green', 'blue'].forEach(c => { IMG[c] = new Image(); IMG[c].src = `img/piece-${c}.png`; IMG[c + 'R'] = new Image(); IMG[c + 'R'].src = `img/piece-${c}-rev.png`; });
+['oyster', 'x-step', 'pipe'].forEach(n => { IMG[n] = new Image(); IMG[n].src = `img/${n}.png`; });
+
+/* ---------- sound ---------- */
+let AC = null, muted = false;
+function tone(f, d = .09, type = 'sine', v = .05, f2 = 0, delay = 0) {
+  if (muted) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
+    const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + .02);
+  } catch (e) {}
+}
+const sfx = {
+  roll: () => { for (let i = 0; i < 5; i++) tone(300 + Math.random() * 300, .05, 'square', .02, 0, i * .06); },
+  hop: () => tone(520, .06, 'sine', .04, 760),
+  out: () => { tone(500, .1, 'triangle', .06, 900); tone(900, .14, 'triangle', .05, 0, .09); },
+  hit: () => { tone(320, .22, 'sawtooth', .05, 90); },
+  pipe: () => { tone(220, .35, 'sine', .07, 700); },
+  home: () => { [700, 880, 1180].forEach((f, i) => tone(f, .18, 'triangle', .06, 0, i * .1)); },
+  win: () => { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, .2, 'triangle', .07, 0, i * .13)); },
+  no: () => tone(180, .18, 'square', .03, 120),
+};
+
+/* ---------- game state ---------- */
+let G = null;                         // the running game
+let SETUP = { n: 4, human: { red: true, yellow: false, green: false, blue: false } };
+const piecesOf = s => G.pieces.filter(p => p.seat === s);
+
+function newGame(n, human) {
+  const seats = MODES[n].map(([col, A]) => ({ col, A, human: !!human[col], ks: A / 7.5, jA: A / 15 }));
+  G = { n, seats, pieces: [], turn: 0, phase: 'idle', roll: 0, moves: [], sel: null, over: false, six: false, tick: 0, floats: [], burst: [], ver: Math.random() };
+  seats.forEach(s => { for (let i = 0; i < 4; i++) G.pieces.push({ col: s.col, seat: s, id: i, rev: i === 3, st: 'bowl', out: false, d: 0, pos: -1, x: 0, y: 0, sc: 1, hop: 0, rot: 0, a: 1 }); });
+  G.pieces.forEach(snap);
+}
+// virtual piece state -> board position
+function xyOf(seat, s) {
+  if (s.out) return pt(3.75 + 7.5 * (seat.ks + s.d), OUT_R);
+  const q = s.pos;
+  if (q === 48) return pt(seat.A, BR_R);
+  if (q <= 72) return pt(15 * (seat.jA + q - 49), IN_R);
+  if (q <= 75) return pt(seat.A, HOME_R[q - 73]);
+  return pt(seat.A, CEN_R);
+}
+const bowlSlot = p => { const c = pt(p.seat.A, BOWL_R), o = [[-16, -16], [16, -16], [-16, 16], [16, 16]][p.id]; return [c[0] + o[0], c[1] + o[1]]; };
+const doneSlot = p => { const c = pt(p.seat.A, 30), o = [[-9, -6], [9, -6], [-9, 8], [9, 8]][p.id]; return [c[0] + o[0] * .8, c[1] + o[1] * .8]; };
+function homeXY(p) {
+  if (p.st === 'bowl') return bowlSlot(p);
+  if (p.st === 'done') return doneSlot(p);
+  return xyOf(p.seat, p);
+}
+function snap(p) { const [x, y] = homeXY(p); p.x = x; p.y = y; p.hop = 0; p.sc = 1; p.a = 1; p.rot = 0; }
+function tileOf(p) {
+  if (p.st !== 'path') return null;
+  if (p.out) return 'o' + mod(p.seat.ks + p.d, 48);
+  if (p.pos >= 49 && p.pos <= 72) return 'i' + mod(p.seat.jA + p.pos - 49, 24);
+  return null;
+}
+function isSafe(id) {
+  if (!id) return true;
+  const i = +id.slice(1);
+  if (id[0] === 'o') return G.seats.some(s => i === mod(s.ks, 48) || i === mod(s.ks - 1, 48));
+  return G.seats.some(s => i === s.jA);
+}
+const prog = p => p.st === 'done' ? 76 : p.st === 'bowl' ? -1 : p.out ? Math.abs(p.d) : p.pos;
+
+function legalMoves(seat, n) {
+  const mv = [];
+  for (const p of piecesOf(seat)) {
+    if (p.st === 'done') continue;
+    if (p.st === 'bowl') { if (n === 6 || n === 1) mv.push({ p, kind: 'out' }); continue; }
+    if (p.out) {
+      for (const dir of (p.rev ? [1, -1] : [1])) { const nd = p.d + dir * n; if (Math.abs(nd) > 76) continue; mv.push({ p, kind: 'step', dir, n }); }
+    } else if (p.pos + n <= 76) mv.push({ p, kind: 'step', dir: 1, n });
+  }
+  return mv;
+}
+// the squares a move visits, one virtual state per step
+function route(mv) {
+  const p = mv.p, out = [];
+  if (mv.kind === 'out') return [{ out: true, d: 0, pos: 0 }];
+  let s = { out: p.out, d: p.d, pos: p.pos };
+  for (let i = 0; i < mv.n; i++) {
+    if (s.out) { s = { out: true, d: s.d + mv.dir, pos: 0 }; if (Math.abs(s.d) >= 48) s = { out: false, d: 0, pos: Math.abs(s.d) }; }
+    else s = { out: false, d: 0, pos: s.pos + 1 };
+    out.push(s);
+  }
+  return out;
+}
+const endState = mv => { const r = route(mv); return r[r.length - 1]; };
+function pipeTarget(seat, s) {                                            // an X on the outer circle: where the pipe comes out on the inner circle
+  if (!s.out) return null; const k = mod(seat.ks + s.d, 48); if (!XSTEPS.includes(k)) return null;
+  return 49 + mod(k / 2 - seat.jA, 24);
+}
+
+/* ---------- tweens (the render loop runs them) ---------- */
+const tweens = [];
+const wait = ms => new Promise(r => tweens.push({ t0: performance.now(), dur: Math.max(1, ms / SPEED), fn: null, r }));
+const anim = (ms, fn) => new Promise(r => tweens.push({ t0: performance.now(), dur: Math.max(1, ms / SPEED), fn, r }));
+function stepTweens(now) {
+  for (let i = tweens.length - 1; i >= 0; i--) {
+    const t = tweens[i], k = Math.min(1, (now - t.t0) / t.dur); if (t.fn) t.fn(k);
+    if (k >= 1) { tweens.splice(i, 1); t.r(); }
+  }
+}
+const ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+
+async function hopTo(p, x, y, ms = 150, h = 12) {
+  const x0 = p.x, y0 = p.y; sfx.hop();
+  await anim(ms, k => { p.x = x0 + (x - x0) * k; p.y = y0 + (y - y0) * k; p.hop = Math.sin(Math.PI * k) * h; p.sc = 1 + Math.sin(Math.PI * k) * .08; });
+  p.x = x; p.y = y; p.hop = 0; p.sc = 1;
+}
+function say(t, ms = 0) { $('msg').textContent = t; }
+function logLine(t) { G.log = [t, ...(G.log || [])].slice(0, 3); $('log').innerHTML = G.log.map(x => `<div>${x}</div>`).join(''); }
+function floatText(text, x, y, col = '#fff') { G.floats.push({ text, x, y, col, t0: performance.now() }); }
+function burst(x, y, col, n = 14) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 30 + Math.random() * 70; G.burst.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 20, r: 2 + Math.random() * 3, col, t0: performance.now(), life: 700 + Math.random() * 500 }); } }
+
+/* ---------- the die ---------- */
+const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+const die = $('die'); die.innerHTML = '<b></b>'.repeat(9);
+function showDie(v) { [...die.children].forEach((b, i) => b.classList.toggle('on', (PIPS[v] || []).includes(i))); }
+showDie(1);
+
+/* ---------- turn flow ---------- */
+const cur = () => G.seats[G.turn];
+function setTurnUI() {
+  const s = cur();
+  die.style.setProperty('--c', COL[s.col]);
+  $('turn').textContent = G.over ? '' : `${NAME[s.col]}${s.human ? '' : ' (CPU)'}`;
+  document.querySelectorAll('.pc').forEach(e => e.classList.toggle('on', e.dataset.col === s.col && !G.over));
+  refreshCards();
+}
+async function startGame() {
+  tweens.length = 0; $('setup').classList.remove('show'); $('win').classList.remove('show'); document.body.classList.add('play');
+  newGame(SETUP.n, SETUP.human); buildCards(); layout();
+  die.classList.remove('ready'); say('Throw the die: the highest throw starts.'); $('log').innerHTML = '';
+  // everyone throws once, highest starts; ties throw again
+  let cand = G.seats.slice();
+  for (let guard = 0; guard < 6 && cand.length > 1; guard++) {
+    const res = [];
+    for (const s of cand) {
+      G.turn = G.seats.indexOf(s); setTurnUI(); const v = await rollAnim(s); res.push([s, v]); logLine(`${NAME[s.col]} throws ${v}`); await wait(450);
+    }
+    const mx = Math.max(...res.map(r => r[1])); cand = res.filter(r => r[1] === mx).map(r => r[0]);
+    if (cand.length > 1) say('A tie: throw again.');
+  }
+  G.turn = G.seats.indexOf(cand[0]); setTurnUI(); say(`${NAME[cur().col]} starts!`); sfx.out(); await wait(900);
+  beginTurn();
+}
+function rollAnim(seat, forced) {
+  const v = forced || 1 + Math.floor(Math.random() * 6);
+  die.classList.add('roll'); sfx.roll();
+  return new Promise(res => {
+    let n = 0; const iv = setInterval(() => { showDie(1 + Math.floor(Math.random() * 6)); if (++n >= 8) { clearInterval(iv); die.classList.remove('roll'); showDie(v); res(v); } }, 75 / Math.min(SPEED, 3));
+  });
+}
+function beginTurn() {
+  if (!G || G.over) return;
+  const s = cur(); setTurnUI(); G.sel = null; G.moves = []; G.phase = 'roll';
+  if (s.human) { die.classList.add('ready'); say(`${NAME[s.col]}: tap the die`); }
+  else { die.classList.remove('ready'); say(`${NAME[s.col]} is thinking…`); wait(750).then(() => doRoll()); }
+}
+async function doRoll() {
+  if (!G || G.phase !== 'roll') return; G.phase = 'rolling'; die.classList.remove('ready');
+  const s = cur(), ver = G.ver, v = await rollAnim(s, G.forceRoll && G.forceRoll.shift()); if (!G || G.ver !== ver) return;
+  G.roll = v; logLine(`${NAME[s.col]} throws ${v}`);
+  G.moves = legalMoves(s, v);
+  if (!G.moves.length) { say(`${NAME[s.col]} threw ${v}: no move`); sfx.no(); await wait(900); if (!G || G.ver !== ver) return; return endTurn(false); }
+  if (s.human && G.moves.length > 1) { G.phase = 'choose'; say(`${NAME[s.col]} threw ${v}: pick a piece`); return; }
+  say(`${NAME[s.col]} threw ${v}`); await wait(s.human ? 450 : 650); if (!G || G.ver !== ver) return;
+  runMove(s.human ? G.moves[0] : aiPick(s, G.moves));
+}
+die.addEventListener('click', () => { if (G && G.phase === 'roll' && cur().human) doRoll(); });
+addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && G && G.phase === 'roll' && cur().human && !document.querySelector('.scr.show')) { e.preventDefault(); doRoll(); } });
+
+async function runMove(mv) {
+  const ver = G.ver, p = mv.p, s = p.seat; G.phase = 'moving'; G.sel = null; die.classList.remove('ready');
+  const rt = route(mv);
+  if (mv.kind === 'out') {
+    p.st = 'path'; p.out = true; p.d = 0; p.pos = 0; sfx.out();
+    const [x, y] = xyOf(s, rt[0]); await hopTo(p, x, y, 320, 26); logLine(`${NAME[s.col]} brings a star out`);
+  } else {
+    for (const st of rt) { if (!G || G.ver !== ver) return; const [x, y] = xyOf(s, st); p.out = st.out; p.d = st.d; p.pos = st.pos; await hopTo(p, x, y, 150, 11); }
+  }
+  // the pipeline
+  const pt2 = pipeTarget(s, { out: p.out, d: p.d });
+  if (pt2 !== null && p.out) {
+    sfx.pipe(); say('Down the pipeline!'); floatText('PIPELINE!', p.x, p.y - 24, '#fff');
+    await anim(260, k => { p.sc = 1 - k; p.a = 1 - k; });
+    p.out = false; p.pos = pt2; p.d = 0; const [x, y] = xyOf(s, p); p.x = x; p.y = y; burst(x, y, '#9fe8ff', 12);
+    await anim(300, k => { p.sc = k; p.a = k; }); p.sc = 1; p.a = 1; logLine(`${NAME[s.col]} slips through a pipeline`);
+  }
+  // captures
+  const id = tileOf(p);
+  if (id && !isSafe(id)) {
+    const hit = G.pieces.filter(q => q.seat !== s && tileOf(q) === id);
+    for (const q of hit) {
+      sfx.hit(); burst(q.x, q.y, LITE[q.col], 16); floatText('SENT HOME!', q.x, q.y - 24, '#fff'); logLine(`${NAME[s.col]} sends a ${NAME[q.col]} star home`);
+      q.st = 'bowl'; q.out = false; q.d = 0; q.pos = -1; const [bx, by] = bowlSlot(q), x0 = q.x, y0 = q.y;
+      await anim(520, k => { q.x = x0 + (bx - x0) * ease(k); q.y = y0 + (by - y0) * ease(k) - Math.sin(Math.PI * k) * 46; q.rot = k * 6.283; });
+      q.rot = 0; snap(q);
+    }
+  }
+  if (!p.out && p.pos === 76) {
+    p.st = 'done'; sfx.home(); const [x, y] = doneSlot(p); burst(p.x, p.y, '#fff2a0', 22); floatText('PEARL!', p.x, p.y - 24, '#ffe14d');
+    await hopTo(p, x, y, 260, 16); p.sc = .8; logLine(`${NAME[s.col]} star reaches the pearl`);
+    if (piecesOf(s).every(q => q.st === 'done')) return win(s);
+  }
+  refreshCards();
+  if (!G || G.ver !== ver) return;
+  endTurn(G.roll === 6);
+}
+async function endTurn(again) {
+  if (G.over) return;
+  if (again) { say(`${NAME[cur().col]} threw a 6: another turn!`); await wait(700); } else G.turn = (G.turn + 1) % G.seats.length;
+  beginTurn();
+}
+function win(s) {
+  G.over = true; G.phase = 'over'; sfx.win(); setTurnUI();
+  for (let i = 0; i < 40; i++) setTimeout(() => burst((Math.random() - .5) * 420, (Math.random() - .5) * 360, [LITE.red, LITE.yellow, LITE.green, LITE.blue, '#fff'][i % 5], 8), i * 40 / SPEED);
+  setTimeout(() => {
+    $('winImg').src = `img/piece-${s.col}.png`; $('winT').innerHTML = `${NAME[s.col]} <b style="color:#e8180c">wins!</b>`;
+    $('winP').textContent = `All 4 stars of ${NAME[s.col].toLowerCase()}${s.human ? '' : ' (computer)'} reached the pearl. Well swum!`; $('win').classList.add('show');
+  }, 1300 / SPEED);
+}
+
+/* ---------- the computer player ---------- */
+function aiPick(seat, moves) {
+  let best = null, bs = -1e9;
+  for (const mv of moves) {
+    const p = mv.p; let sc = Math.random() * 3;
+    if (mv.kind === 'out') sc += 48;
+    else {
+      const e = endState(mv), pp = pipeTarget(seat, e), fin = pp !== null ? { out: false, pos: pp } : e;
+      const to = fin.out ? 'o' + mod(seat.ks + fin.d, 48) : (fin.pos >= 49 && fin.pos <= 72 ? 'i' + mod(seat.jA + fin.pos - 49, 24) : null);
+      const safe = isSafe(to);
+      sc += mv.n * 1.2 + (pp !== null ? 55 : 0);
+      if (!fin.out && fin.pos === 76) sc += 95;
+      if (to && !safe && G.pieces.some(q => q.seat !== seat && tileOf(q) === to)) sc += 110 + (prog(G.pieces.find(q => q.seat !== seat && tileOf(q) === to)) || 0) * .6;
+      if (safe && to) sc += 12;
+      if (to && !safe) {                                                      // would an enemy star be a few steps behind us?
+        const k = to; if (G.pieces.some(q => q.seat !== seat && q.st === 'path' && tileOf(q) && tileOf(q)[0] === k[0] && mod(+k.slice(1) - +tileOf(q).slice(1), k[0] === 'o' ? 48 : 24) <= 6 && tileOf(q) !== k)) sc -= 14;
+      }
+      const from = tileOf(p); if (from && !isSafe(from)) sc += 5;
+      if (p.rev && p.out) sc += mv.dir === 1 ? 1 : -1;
+      sc += prog(p) * .08;
+    }
+    if (sc > bs) { bs = sc; best = mv; }
+  }
+  return best;
+}
+
+/* ---------- human input on the board ---------- */
+function destXY(seat, mv) {                                               // where a move ends, after any pipeline
+  let e = endState(mv); const pp = mv.kind === 'out' ? null : pipeTarget(seat, e); if (pp !== null) e = { out: false, pos: pp };
+  return xyOf(seat, e);
+}
+const cv = $('cv'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, view = { cx: 0, cy: 0, s: 1 };
+function size() { DPR = Math.min(devicePixelRatio || 1, 2); W = cv.width = Math.round(innerWidth * DPR); H = cv.height = Math.round(innerHeight * DPR); layout(); }
+function layout() {
+  const iw = innerWidth, ih = innerHeight, portrait = iw / ih < 1.4, ix = parseFloat(getComputedStyle(HTML).getPropertyValue('--ix')) || 0;
+  HTML.classList.toggle('stack', portrait);
+  let l = ix, r = iw - ix, t = 0, b = ih;
+  if (document.body.classList.contains('play')) {
+    const pr = $('players').getBoundingClientRect(), sr = $('side').getBoundingClientRect(), tb = $('topbar').getBoundingClientRect();
+    if (portrait) { t = pr.bottom + 4; b = sr.top - 2; } else { l = pr.right + 6; r = sr.left - 6; t = tb.bottom + 2; b = ih - 6; }
+  } else if (HTML.classList.contains('bgonly')) { t = ih * .1; b = ih * .74; l = ix + iw * .24; r = iw - ix - iw * .04; }
+  else { t = 0; b = ih * .85; l = ix + iw * .12; r = iw - ix - iw * .12; }
+  const modes = MODES[G ? G.n : 4], ex = Math.max(245, ...modes.map(([c, a]) => Math.abs(BOWL_R * Math.cos(a * D2R)) + 50)), ey = Math.max(245, ...modes.map(([c, a]) => Math.abs(BOWL_R * Math.sin(a * D2R)) + 48));
+  const aw = Math.max(80, r - l), ah = Math.max(80, b - t);
+  view.s = Math.min(aw / (2 * ex), ah / (2 * ey));
+  view.cx = (l + r) / 2; view.cy = (t + b) / 2;
+}
+addEventListener('resize', size);
+const toBoard = (cx, cy) => [(cx - view.cx) / view.s, (cy - view.cy) / view.s];
+cv.addEventListener('pointerdown', e => {
+  if (!G || G.phase !== 'choose' || !cur().human) return;
+  const [bx, by] = toBoard(e.clientX, e.clientY), s = cur();
+  if (G.sel) {                                                                // a destination marker?
+    for (const mv of G.moves.filter(m => m.p === G.sel)) { const [x, y] = destXY(s, mv); if (Math.hypot(bx - x, by - y) < 20) return pickMove(mv); }
+  }
+  let best = null, bd = 24;
+  for (const p of piecesOf(s)) if (G.moves.some(m => m.p === p)) { const d = Math.hypot(bx - p.x, by - p.y + 10); if (d < bd) { bd = d; best = p; } }
+  if (!best) { G.sel = null; return; }
+  const own = G.moves.filter(m => m.p === best);
+  if (own.length === 1) pickMove(own[0]); else { G.sel = best; sfx.hop(); say('Choose which way round'); }
+});
+function pickMove(mv) { if (G.phase !== 'choose') return; G.sel = null; runMove(mv); }
+
+/* ---------- drawing ---------- */
+function sector(r0, r1, a0, a1) { g.beginPath(); g.arc(0, 0, r1, a0 * D2R, a1 * D2R); g.arc(0, 0, r0, a1 * D2R, a0 * D2R, true); g.closePath(); }
+function block(angDeg, r0, r1, w0, w1) {                                    // a trapezoid along the arm axis
+  g.save(); g.rotate(angDeg * D2R); g.beginPath(); g.moveTo(r0, -w0 / 2); g.lineTo(r1, -w1 / 2); g.lineTo(r1, w1 / 2); g.lineTo(r0, w0 / 2); g.closePath(); g.restore();
+}
+function drawBackground(t) {
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#c6ecfa'); gr.addColorStop(.55, '#8fdaf6'); gr.addColorStop(1, '#5fc2ec'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.save(); g.globalAlpha = .12; g.fillStyle = '#fff';                                                    // light rays
+  for (let i = 0; i < 5; i++) { const x = W * (.1 + i * .22) + Math.sin(t * .2 + i) * 30 * DPR; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 90 * DPR, 0); g.lineTo(x + 250 * DPR - 90 * DPR, H); g.lineTo(x + 40 * DPR - 90 * DPR, H); g.fill(); } g.restore();
+  g.fillStyle = 'rgba(60,150,190,.38)';                                                                  // seaweed
+  const weed = (x, h, w, sway) => { g.beginPath(); g.moveTo(x - w, H); g.bezierCurveTo(x - w * 1.3 + sway, H - h * .5, x - w * .6 + sway * 1.4, H - h * .85, x + sway * 1.6, H - h); g.bezierCurveTo(x + w * .8 + sway * 1.4, H - h * .8, x + w * 1.4 + sway, H - h * .5, x + w, H); g.fill(); };
+  [[.05, .55, 46], [.1, .38, 36], [.9, .6, 50], [.95, .4, 34], [.84, .32, 30], [.16, .28, 28]].forEach(([fx, fh, w], i) => weed(W * fx, H * fh, w * DPR, Math.sin(t * .8 + i) * 8 * DPR));
+  g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2 * DPR;                                            // bubbles
+  for (let i = 0; i < 14; i++) { const u = (t * .05 + i * .137) % 1, x = W * ((i * .263) % 1) + Math.sin(t + i) * 10 * DPR, y = H * (1.05 - u * 1.15), r = (6 + (i % 4) * 5) * DPR; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.stroke(); }
+  g.fillStyle = '#6b4f2a';                                                                                // the sea floor
+  g.beginPath(); g.moveTo(0, H); g.lineTo(0, H * .93); g.bezierCurveTo(W * .2, H * .9, W * .3, H * .97, W * .5, H * .96); g.bezierCurveTo(W * .7, H * .95, W * .82, H * .86, W, H * .9); g.lineTo(W, H); g.fill();
+  g.fillStyle = 'rgba(40,25,5,.25)'; for (let i = 0; i < 60; i++) g.fillRect(((i * 197) % 1000) / 1000 * W, H * (.94 + (i * 31 % 6) / 100), 3 * DPR, 2 * DPR);
+}
+const rgba = (hex, al) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${al})`; };
+const SOFT = .7;                                                                                         // how solid the board colours are
+function drawBoard(t) {
+  const seats = G ? G.seats : MODES[4].map(([col, A]) => ({ col, A, ks: A / 7.5, jA: A / 15 }));
+  const n = seats.length;
+  g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.arc(0, 0, 252, 0, 6.283); g.fill();            // the soft aura under the wheel
+  g.fillStyle = 'rgba(170,225,245,.55)'; g.beginPath(); g.arc(0, 0, 196, 0, 6.283); g.fill();
+  const armOuter = new Set(), armInner = new Set(); seats.forEach(s => { armOuter.add(mod(s.ks, 48)); armOuter.add(mod(s.ks - 1, 48)); armInner.add(s.jA); });
+  const colOf = (idx, key) => { for (const s of seats) if (key === 'o' ? (idx === mod(s.ks, 48) || idx === mod(s.ks - 1, 48)) : idx === s.jA) return COL[s.col]; return null; };
+  const EDGE = 'rgba(30,100,135,.7)';                                                                    // every step has a clear boundary, as on a Ludo King board
+  const tile = (r0, r1, a0, a1, c) => { sector(r0, r1, a0, a1); g.fillStyle = '#f6fcfe'; g.fill(); if (c) { g.fillStyle = rgba(c, SOFT); g.fill(); } g.strokeStyle = EDGE; g.lineWidth = 1.3; g.stroke(); };
+  for (let k = 0; k < 48; k++) { const a = 7.5 * k + .4; tile(OUT_A, OUT_B, a, a + 6.7, colOf(k, 'o')); }          // outer circle
+  for (let j = 0; j < 24; j++) { const a = 15 * j - 6.9; tile(IN_A, IN_B, a, a + 13.8, colOf(j, 'i')); }       // inner circle
+  // arms: entry ramp, bridge and the home lane of each colour
+  const part = (c, shadeAmt = 0) => { g.fillStyle = rgba(c, SOFT); g.fill(); g.strokeStyle = EDGE; g.lineWidth = 1.3; g.stroke(); };
+  seats.forEach(s => {
+    const c = COL[s.col];
+    block(s.A, OUT_B + 1, OUT_B + 46, 56, 52); g.fillStyle = '#f6fcfe'; g.fill(); part(c);
+    block(s.A, IN_B + 1, OUT_A - 1, 26, 30); g.fillStyle = '#f6fcfe'; g.fill(); part(c);
+    [[121, 104, 28, 24], [102, 87, 24, 20], [85, 70, 19, 15]].forEach(([a, b, w0, w1]) => { block(s.A, b, a, w1, w0); g.fillStyle = '#f6fcfe'; g.fill(); part(c); });
+    // arrows along both circles, as on the board
+    g.strokeStyle = rgba(c, .85); g.fillStyle = rgba(c, .85); g.lineWidth = 2.6; g.lineCap = 'round';
+    [[OUT_R + 4, s.A + 4, s.A + 62], [IN_R, s.A + 8, s.A + 70]].forEach(([r, a0, a1]) => {
+      g.beginPath(); g.arc(0, 0, r, a0 * D2R, a1 * D2R); g.stroke(); const [x, y] = pt(a1, r), tg = (a1 + 90) * D2R;
+      g.beginPath(); g.moveTo(x + Math.cos(tg) * 7, y + Math.sin(tg) * 7); g.lineTo(x + Math.cos(tg + 2.5) * 6, y + Math.sin(tg + 2.5) * 6); g.lineTo(x + Math.cos(tg - 2.5) * 6, y + Math.sin(tg - 2.5) * 6); g.fill();
+    });
+  });
+  // pipelines: the pipe starts under the pipeline step and comes out on the inner circle step it leads to
+  XSTEPS.forEach(k => {
+    const ang = 3.75 + 7.5 * k, [x, y] = pt(ang, OUT_R), im = IMG['x-step'];
+    const p0 = pt(ang, OUT_A + 4), p1 = pt(ang - 3.75, IN_B - 6), cp = pt(ang - 1.2, BR_R + 2);
+    const pipe = (w, col) => { g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(p0[0], p0[1]); g.quadraticCurveTo(cp[0], cp[1], p1[0], p1[1]); g.stroke(); };
+    pipe(14, '#0a7fa3'); pipe(10.5, '#0fb4dc'); pipe(3, 'rgba(255,255,255,.55)');
+    g.fillStyle = '#d6f7fd'; g.strokeStyle = '#0a7fa3'; g.lineWidth = 1.5; g.beginPath(); g.arc(p1[0], p1[1], 5.2, 0, 6.283); g.fill(); g.stroke();
+    if (im.complete && im.naturalWidth) g.drawImage(im, x - 11, y - 10, 22, 20);
+  });
+  // the home disc, split between the colours in play, and the oyster with its pearl
+  g.beginPath(); g.arc(0, 0, DISC_R + 3, 0, 6.283); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = EDGE; g.lineWidth = 1.3; g.stroke();
+  seats.forEach(s => { const half = 180 / n; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, DISC_R, (s.A - half) * D2R, (s.A + half) * D2R); g.closePath(); g.fillStyle = rgba(COL[s.col], SOFT + .08); g.fill(); });
+  const oy = IMG.oyster; if (oy.complete && oy.naturalWidth) g.drawImage(oy, -34, -22, 68, 48);
+  // houses (the start circles): a colour square, a white court with four spots, like Ludo King
+  seats.forEach(s => {
+    const [x, y] = pt(s.A, BOWL_R), c = COL[s.col], rr = (cx, cy, w, h, r) => { g.beginPath(); g.roundRect(cx - w / 2, cy - h / 2, w, h, r); };
+    g.save(); g.translate(x, y);
+    g.fillStyle = 'rgba(0,50,80,.18)'; rr(2, 5, HOUSE * 2, HOUSE * 2, 12); g.fill();
+    rr(0, 0, HOUSE * 2, HOUSE * 2, 12); g.fillStyle = rgba(c, SOFT + .1); g.fill(); g.strokeStyle = EDGE; g.lineWidth = 1.6; g.stroke();
+    rr(0, 0, HOUSE * 1.5, HOUSE * 1.5, 7); g.fillStyle = '#fbfeff'; g.fill(); g.strokeStyle = EDGE; g.lineWidth = 1.2; g.stroke();
+    [[-16, -16], [16, -16], [-16, 16], [16, 16]].forEach(([ox, oy2]) => { g.beginPath(); g.arc(ox, oy2, 11, 0, 6.283); g.fillStyle = rgba(c, .2); g.fill(); g.strokeStyle = rgba(c, .8); g.lineWidth = 2.4; g.stroke(); });
+    g.restore();
+  });
+}
+function shade(hex, amt) { const n = parseInt(hex.slice(1), 16), f = c => Math.max(0, Math.min(255, Math.round(c * (1 + amt)))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+// a token pin, like the pins on a Ludo King board: a coloured base disc and a silver pin with a colour gem; the reverse star wears a halo
+function drawPiece(p, t, lit) {
+  const c = COL[p.col];
+  g.save(); g.translate(p.x, p.y - p.hop); g.globalAlpha = p.a;
+  g.fillStyle = 'rgba(0,50,80,.28)'; g.beginPath(); g.ellipse(1, 6 + p.hop * .4, 10 * p.sc, 4 * p.sc, 0, 0, 6.283); g.fill();
+  g.rotate(p.rot); const k = p.sc * (p.stack || 1) * (p.st === 'bowl' ? .8 : 1); g.scale(k, k);
+  if (lit) { g.shadowColor = '#fff'; g.shadowBlur = 12 + Math.sin(t * 7) * 4; }
+  g.beginPath(); g.ellipse(0, 3, 10.5, 5, 0, 0, 6.283); g.fillStyle = shade(c, -.35); g.fill();                  // base disc
+  g.beginPath(); g.ellipse(0, 2, 8.5, 3.8, 0, 0, 6.283); g.fillStyle = LITE[p.col]; g.fill();
+  g.shadowBlur = 0;
+  g.beginPath(); g.moveTo(0, 3); g.bezierCurveTo(-3, -3, -9.5, -8.5, -9.5, -16); g.arc(0, -16, 9.5, Math.PI, 0); g.bezierCurveTo(9.5, -8.5, 3, -3, 0, 3); g.closePath();   // the pin
+  const pg = g.createLinearGradient(-9, -22, 9, -4); pg.addColorStop(0, '#ffffff'); pg.addColorStop(.55, '#dfe6ec'); pg.addColorStop(1, '#9aa7b2'); g.fillStyle = pg; g.fill();
+  g.strokeStyle = '#4d5e6b'; g.lineWidth = 1.3; g.stroke();
+  g.beginPath(); g.arc(0, -16, 5.4, 0, 6.283); g.fillStyle = c; g.fill(); g.strokeStyle = shade(c, -.35); g.lineWidth = 1; g.stroke();
+  g.beginPath(); g.arc(-1.8, -17.8, 1.6, 0, 6.283); g.fillStyle = 'rgba(255,255,255,.7)'; g.fill();
+  if (p.rev) { g.beginPath(); g.ellipse(0, -27, 10, 3.4, 0, 0, 6.283); g.strokeStyle = '#7d8a94'; g.lineWidth = 2.6; g.stroke(); g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = .9; g.stroke(); }   // the halo
+  g.restore();
+}
+function drawOverlay(t) {
+  if (!G) return;
+  const s = cur();
+  if (G.phase === 'choose' && s.human) {
+    const mine = piecesOf(s).filter(p => G.moves.some(m => m.p === p));
+    mine.forEach(p => { g.save(); g.translate(p.x, p.y + 4); g.strokeStyle = '#fff6a8'; g.lineWidth = 3; g.globalAlpha = .6 + .4 * Math.sin(t * 7); g.beginPath(); g.ellipse(0, 0, 17 + Math.sin(t * 7) * 1.5, 8.5, 0, 0, 6.283); g.stroke(); g.restore(); });
+    const sel = G.sel ? [G.sel] : (mine.length <= 4 ? mine : []);
+    // ghost destinations for the selected star, or for every movable star
+    (G.sel ? G.moves.filter(m => m.p === G.sel) : G.moves).forEach(mv => {
+      const [x, y] = destXY(s, mv); g.save(); g.translate(x, y); g.globalAlpha = G.sel ? .95 : .55; g.strokeStyle = LITE[s.col]; g.fillStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 3;
+      g.beginPath(); g.arc(0, 0, 10 + Math.sin(t * 6) * 1.5, 0, 6.283); g.fill(); g.stroke(); g.restore();
+    });
+  }
+  for (let i = G.floats.length - 1; i >= 0; i--) {
+    const f = G.floats[i], k = (performance.now() - f.t0) / (1100 / SPEED); if (k >= 1) { G.floats.splice(i, 1); continue; }
+    g.save(); g.globalAlpha = 1 - k * k; g.font = '700 17px Bangers, Impact, sans-serif'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = '#07354a'; g.fillStyle = f.col;
+    g.strokeText(f.text, f.x, f.y - k * 26); g.fillText(f.text, f.x, f.y - k * 26); g.restore();
+  }
+  for (let i = G.burst.length - 1; i >= 0; i--) {
+    const b = G.burst[i], dt = (performance.now() - b.t0) / 1000 * SPEED, life = b.life / 1000; if (dt > life) { G.burst.splice(i, 1); continue; }
+    g.save(); g.globalAlpha = 1 - dt / life; g.fillStyle = b.col; g.beginPath(); g.arc(b.x + b.vx * dt, b.y + b.vy * dt + 60 * dt * dt, b.r, 0, 6.283); g.fill(); g.restore();
+  }
+}
+let T0 = performance.now(), attract = [];
+function frame(now) {
+  stepTweens(now); const t = (now - T0) / 1000;
+  g.setTransform(1, 0, 0, 1, 0, 0); drawBackground(t);
+  g.setTransform(view.s * DPR, 0, 0, view.s * DPR, view.cx * DPR, view.cy * DPR);
+  drawBoard(t);
+  if (G) {
+    // stack pieces that share a square
+    const groups = {}; G.pieces.forEach(p => { const id = tileOf(p); if (id && p.hop === 0) (groups[id] = groups[id] || []).push(p); });
+    G.pieces.forEach(p => p.stack = 1);
+    Object.values(groups).forEach(a => { if (a.length > 1) a.forEach((p, i) => { p.stack = .85; p.dx = (i - (a.length - 1) / 2) * 11; }); });
+    const lit = cur() && G.phase === 'choose' && cur().human;
+    const list = G.pieces.slice().sort((a, b) => (a.y - a.hop * .1) - (b.y - b.hop * .1));
+    list.forEach(p => { const dx = p.stack < 1 && p.hop === 0 ? p.dx : 0; p.x += dx; drawPiece(p, t, lit && p.seat === cur() && G.moves.some(m => m.p === p)); p.x -= dx; });
+    drawOverlay(t);
+  } else {                                                                                  // attract: a few stars bobbing on the 4 player board
+    MODES[4].forEach(([col, A], i) => { for (let k = 0; k < 4; k++) { const p = { col, rev: k === 3, x: pt(A, BOWL_R)[0] + [-16, 16, -16, 16][k], y: pt(A, BOWL_R)[1] + [-16, -16, 16, 16][k] + Math.sin(t * 2 + i + k) * 1.5, sc: 1, hop: 0, rot: 0, a: 1 }; drawPiece(p, t, false); }
+      const q = { col, rev: false, x: pt(15 * 0 + 3.75 + 7.5 * (A / 7.5 + ((t * 3 + i * 12) % 48)), OUT_R)[0], y: 0, sc: 1, hop: 0, rot: 0, a: 1 }; const ang = 3.75 + 7.5 * (A / 7.5 + ((t * 2.2) % 48)); [q.x, q.y] = pt(ang, OUT_R); q.hop = Math.abs(Math.sin(t * 7)) * 6; drawPiece(q, t, false); });
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- cards, setup, rules ---------- */
+function buildCards() {
+  const box = $('players'); box.innerHTML = '';
+  G.seats.forEach(s => {
+    const d = document.createElement('div'); d.className = 'pc'; d.dataset.col = s.col; d.style.setProperty('--c', COL[s.col]);
+    d.innerHTML = `<img src="img/piece-${s.col}.png" alt=""><b>${NAME[s.col]}<small>${s.human ? 'YOU' : 'CPU'}</small></b><span class="pips"></span>`; box.appendChild(d);
+  });
+}
+function refreshCards() {
+  if (!G) return;
+  G.seats.forEach(s => { const e = document.querySelector(`.pc[data-col="${s.col}"] .pips`); if (!e) return; e.style.setProperty('--c', COL[s.col]); e.parentElement.parentElement.style.setProperty('--c', COL[s.col]);
+    e.innerHTML = piecesOf(s).map(p => `<i class="${p.st === 'done' ? 'd' : p.st === 'path' ? 'p' : 'b'}"></i>`).join(''); });
+}
+function miniSvg(n) {
+  const arms = MODES[n].map(([c, a]) => { const x = 28 + 24 * Math.cos(a * D2R), y = 28 + 24 * Math.sin(a * D2R); return `<line x1="28" y1="28" x2="${x}" y2="${y}" stroke="${COL[c]}" stroke-width="6" stroke-linecap="round"/><circle cx="${28 + 29 * Math.cos(a * D2R) * .86}" cy="${28 + 29 * Math.sin(a * D2R) * .86}" r="5" fill="#fff" stroke="${COL[c]}" stroke-width="2"/>`; }).join('');
+  return `<svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="22" fill="#e9f7fc" stroke="#9fd6ea" stroke-width="3"/><circle cx="28" cy="28" r="12" fill="#cfeaf4" stroke="#9fd6ea" stroke-width="2"/>${arms}</svg>`;
+}
+function buildSetup() {
+  const cnt = $('cnt'); cnt.innerHTML = '';
+  [2, 3, 4].forEach(n => { const b = document.createElement('button'); b.className = 'cn' + (SETUP.n === n ? ' on' : ''); b.innerHTML = `${miniSvg(n)}<b>${n} PLAYERS</b><small>${n === 2 ? 'face to face' : n === 3 ? 'three arms' : 'the full wheel'}</small>`; b.onclick = () => { SETUP.n = n; buildSetup(); }; cnt.appendChild(b); });
+  const seats = $('seats'); seats.innerHTML = '';
+  MODES[SETUP.n].forEach(([c]) => { const d = document.createElement('div'); d.className = 'seat'; d.style.setProperty('--c', COL[c]);
+    d.innerHTML = `<img src="img/piece-${c}.png" alt=""><b>${NAME[c]}</b>`; const bt = document.createElement('button'); bt.className = SETUP.human[c] ? '' : 'cpu'; bt.textContent = SETUP.human[c] ? 'HUMAN' : 'COMPUTER';
+    bt.onclick = () => { SETUP.human[c] = !SETUP.human[c]; if (!MODES[SETUP.n].some(([k]) => SETUP.human[k]) && !SETUP.human[c]) { /* all computers: allowed (watch mode) */ } buildSetup(); }; d.appendChild(bt); seats.appendChild(d); });
+}
+function showSetup() { G && (G.ver = Math.random()); tweens.length = 0; document.body.classList.remove('play'); G = null; layout(); buildSetup(); $('win').classList.remove('show'); $('rules').classList.remove('show'); $('setup').classList.add('show'); }
+$('bStart').onclick = startGame;
+$('bRules').onclick = $('bRules2').onclick = () => $('rules').classList.add('show');
+$('bRulesClose').onclick = () => $('rules').classList.remove('show');
+$('bMenu').onclick = showSetup; $('bChange').onclick = showSetup; $('bAgain').onclick = startGame;
+$('bSnd').onclick = () => { muted = !muted; $('bSnd').style.opacity = muted ? .55 : 1; $('bSnd').textContent = muted ? '♪ MUTED' : '♪ SOUND'; };
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if ($('rules').classList.contains('show')) { $('rules').classList.remove('show'); return; }
+    try { const x = parent.document.getElementById('hhExit'); if (x) x.click(); } catch (_) {}
+  } else if ((e.key === 'm' || e.key === 'M')) $('bSnd').click();
+});
+
+/* host hook: the handheld's screen was pressed */
+window.gameStart = function () { HTML.classList.remove('bgonly'); showSetup(); };
+size();
+if (!HTML.classList.contains('bgonly') && !HTML.classList.contains('embed')) showSetup();
+requestAnimationFrame(frame);
+
+/* test hooks */
+window.LUDO = { get G() { return G; }, view, SETUP, startGame, showSetup, legalMoves, route, aiPick, tileOf, isSafe, xyOf };
+</script>
+</body>
+</html>

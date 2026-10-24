@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AR Projects: Unity experiments</title>
+<meta name="description" content="Four AR experiences made in Unity: a 3D room decor, an AR video player, 3D image targets and an interactive car garage with a depth mask. Videos play inside a phone.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+/* embedded in the portfolio's handheld: ?embed, &bg (attract view only, no UI), &inset=<px> (keep UI clear of the pillars) */
+(function () { const Q = new URLSearchParams(location.search), h = document.documentElement;
+  if (Q.has('embed')) h.classList.add('embed'); if (Q.has('bg')) h.classList.add('bgonly');
+  h.style.setProperty('--ix', (parseFloat(Q.get('inset')) || 0) + 'px'); })();
+</script>
+<style>
+:root{--ix:0px;--top:0px;--ink:#e8f6ff;--dim:#8fb0c8;--cy:#35e0ff;--mg:#ff4fd8;--lime:#9dff6b;--bg:#060a18;--panel:rgba(10,20,44,.72)}
+html.embed{--top:24px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:500 clamp(11px,min(1.5vw,2.5vh),16px)/1.35 'Space Grotesk',system-ui,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hd{font-family:Orbitron,'Space Grotesk',sans-serif;letter-spacing:.12em;text-transform:uppercase}
+
+/* ---------- layout ---------- */
+#ui{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;padding:calc(var(--top) + 2.7em) calc(var(--ix) + .9em) .9em;gap:.7em;pointer-events:none}
+#ui>*{pointer-events:auto}
+#top{display:flex;align-items:center;justify-content:center;gap:1em;flex:none;pointer-events:none;position:absolute;left:calc(var(--ix) + 7em);right:calc(var(--ix) + 4em);top:calc(var(--top) + .6em)}
+#top h1{font-size:1.25em;font-weight:800;color:#fff;text-shadow:0 0 .8em var(--cy)}
+#top h1 b{color:var(--cy)}
+#top .tags{display:flex;gap:.5em;flex-wrap:wrap}
+.tag{font-size:.7em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cy);border:1px solid rgba(53,224,255,.5);border-radius:2em;padding:.15em .8em;background:rgba(53,224,255,.08)}
+#main{flex:1;min-height:0;display:flex;flex-direction:column;gap:.7em}
+#list{display:flex;flex:none;gap:.4em;justify-content:safe center;overflow-x:auto;padding:.3em .2em .35em;scrollbar-width:none}
+.it{display:flex;align-items:center;flex:none;gap:.55em;text-align:left;padding:.4em .95em;white-space:nowrap;border-radius:.8em;background:var(--panel);border:1px solid rgba(53,224,255,.18);backdrop-filter:blur(6px);position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .25s,background .25s}
+.it:hover{border-color:rgba(53,224,255,.6);transform:translateY(-.12em)}
+.it .n{font-family:Orbitron,sans-serif;font-weight:800;font-size:.85em;color:var(--dim)}
+.it b{font-weight:700;font-size:.92em;line-height:1.15;color:#fff}
+.it small{display:none;font-size:.66em;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.it.on{border-color:var(--cy);background:linear-gradient(90deg,rgba(53,224,255,.22),rgba(10,20,44,.78));box-shadow:0 0 1.4em rgba(53,224,255,.35),inset 0 0 1em rgba(53,224,255,.12)}
+.it.on .n{color:var(--cy)}
+.it.on::after{content:"";position:absolute;left:14%;right:14%;bottom:0;height:.2em;background:var(--cy);box-shadow:0 0 .8em var(--cy)}
+#stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
+#info{flex:none;display:grid;grid-template-columns:minmax(9em,14em) minmax(0,1fr) minmax(10em,17em);grid-template-areas:"k p ch" "h p nv";gap:.35em 1.4em;align-items:center;padding:.8em 1.2em;border-radius:1em;background:var(--panel);border:1px solid rgba(53,224,255,.25);backdrop-filter:blur(8px);max-height:38%;overflow:auto;box-shadow:0 0 2em rgba(0,0,0,.35)}
+#info .k{grid-area:k;display:flex;justify-content:space-between;align-items:center;gap:1em;font-size:.7em;letter-spacing:.16em;color:var(--cy);font-weight:700;text-transform:uppercase}
+#info h2{grid-area:h;font-size:1.3em;line-height:1.1;color:#fff}
+#info p{grid-area:p;font-size:.92em;color:#cfe3f1;line-height:1.45}
+#chips{grid-area:ch;display:flex;flex-wrap:wrap;gap:.4em;justify-content:flex-end}
+#chips span{font-size:.72em;font-weight:700;color:#06121f;background:var(--cy);border-radius:.4em;padding:.15em .6em}
+#chips span:nth-child(2n){background:var(--lime)}#chips span:nth-child(3n){background:#ffd24a}
+#nav{grid-area:nv;display:flex;gap:.5em}
+#nav button{flex:1;padding:.5em;border-radius:.6em;border:1px solid rgba(53,224,255,.4);background:rgba(53,224,255,.08);font-weight:700;font-size:.85em;transition:background .2s,transform .1s}
+#nav button:hover{background:rgba(53,224,255,.25)}#nav button:active{transform:scale(.96)}
+#nav button:disabled{opacity:.35;pointer-events:none}
+
+/* ---------- the phone ---------- */
+#phone{--s:300px;position:relative;flex:none;width:200px;height:420px;border-radius:calc(var(--s)*.14);padding:calc(var(--s)*.034);background:linear-gradient(145deg,#2a3550,#0b1020 45%,#1b2640);box-shadow:0 0 0 1px #5a6f96,0 0 0 calc(var(--s)*.012) #0a0f1d,0 0 3em rgba(53,224,255,.35),0 2.2em 3em rgba(0,0,0,.55);transition:width .65s cubic-bezier(.6,0,.2,1),height .65s cubic-bezier(.6,0,.2,1)}
+#phone.turn{animation:turn .65s cubic-bezier(.6,0,.2,1)}
+@keyframes turn{0%{transform:rotate(0) scale(1)}45%{transform:rotate(-7deg) scale(.93)}100%{transform:rotate(0) scale(1)}}
+#phone::before,#phone::after{content:"";position:absolute;background:#3a4a6c;border-radius:2px}
+#phone::before{right:calc(var(--s)*-.016);top:22%;width:calc(var(--s)*.014);height:12%}
+#phone::after{right:calc(var(--s)*-.016);top:38%;width:calc(var(--s)*.014);height:8%}
+#phone.land::before,#phone.land::after{right:auto;top:calc(var(--s)*-.016);height:calc(var(--s)*.014);width:12%;left:22%}
+#phone.land::after{left:38%;width:8%}
+.scr{position:relative;width:100%;height:100%;border-radius:calc(var(--s)*.108);overflow:hidden;background:#000;isolation:isolate}
+.cam{position:absolute;z-index:6;width:calc(var(--s)*.05);height:calc(var(--s)*.05);border-radius:50%;background:radial-gradient(circle at 35% 35%,#2a4a7a,#05080f 70%);box-shadow:0 0 0 calc(var(--s)*.008) #0a0f1d;top:calc(var(--s)*.03);left:50%;transform:translateX(-50%);transition:all .65s}
+#phone.land .cam{top:50%;left:calc(var(--s)*.03);transform:translateY(-50%)}
+.scr{container-type:size}
+#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transform:scale(.9);filter:blur(6px) saturate(1.6);transition:opacity .55s,transform .55s,filter .55s}
+.scr.live #vid{opacity:1;transform:none;filter:none}
+/* a clip filmed sideways is turned a quarter so it fills the landscape screen */
+#vid.rot{inset:auto;left:50%;top:50%;width:100cqh;height:100cqw;transform:translate(-50%,-50%) rotate(90deg) scale(.9)}
+.scr.live #vid.rot{transform:translate(-50%,-50%) rotate(90deg)}
+/* a true portrait clip gets a blurred copy of itself behind it instead of black bars */
+#vbg{position:absolute;inset:-10%;width:120%;height:120%;object-fit:cover;filter:blur(24px) brightness(.55) saturate(1.5);opacity:0;transition:opacity .5s}
+.scr.blurfill #vbg{opacity:1}
+.scr.blurfill #vid{background:transparent}
+/* the viewfinder: corner brackets and the AR tag stay over the video */
+.vf{position:absolute;inset:calc(var(--s)*.05);z-index:4;pointer-events:none}
+.vf i{position:absolute;width:12%;height:12%;border:0 solid var(--cy);filter:drop-shadow(0 0 4px var(--cy));opacity:.9}
+.vf i:nth-child(1){left:0;top:0;border-width:2px 0 0 2px;border-top-left-radius:6px}
+.vf i:nth-child(2){right:0;top:0;border-width:2px 2px 0 0;border-top-right-radius:6px}
+.vf i:nth-child(3){left:0;bottom:0;border-width:0 0 2px 2px;border-bottom-left-radius:6px}
+.vf i:nth-child(4){right:0;bottom:0;border-width:0 2px 2px 0;border-bottom-right-radius:6px}
+#phone.land .vf i{width:7%;height:15%}
+.vf .st{position:absolute;left:50%;bottom:calc(var(--s)*.02);transform:translateX(-50%);font-size:calc(var(--s)*.034);letter-spacing:.18em;color:var(--cy);text-shadow:0 0 6px #000;font-weight:700;white-space:nowrap}
+.vf .st::before{content:"";display:inline-block;width:.6em;height:.6em;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime);margin-right:.6em;animation:bl 1.2s infinite}
+@keyframes bl{50%{opacity:.25}}
+/* scan sequence before each video */
+#scan{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#12304f,#04070f 75%);opacity:0;pointer-events:none;transition:opacity .3s}
+.scr.scanning #scan{opacity:1}
+#scan .grid{position:absolute;inset:0;background:linear-gradient(rgba(53,224,255,.16) 1px,transparent 1px) 0 0/16% 12%,linear-gradient(90deg,rgba(53,224,255,.16) 1px,transparent 1px) 0 0/12% 16%;transform:perspective(300px) rotateX(58deg) scale(1.8) translateY(-8%);transform-origin:50% 100%;opacity:.7}
+#scan .tg{position:relative;width:calc(var(--s)*.5);height:calc(var(--s)*.5);max-width:62%;max-height:62%;aspect-ratio:1}
+#scan .tg .mk{position:absolute;inset:14%;background:conic-gradient(#0000 25%,rgba(53,224,255,.55) 0 50%,#0000 0 75%,rgba(53,224,255,.55) 0) 0 0/33.3% 33.3%;border:2px solid rgba(53,224,255,.6);opacity:.7}
+#scan .tg i{position:absolute;width:28%;height:28%;border:0 solid var(--lime);filter:drop-shadow(0 0 5px var(--lime))}
+#scan .tg i:nth-child(1){left:0;top:0;border-width:3px 0 0 3px}#scan .tg i:nth-child(2){right:0;top:0;border-width:3px 3px 0 0}
+#scan .tg i:nth-child(3){left:0;bottom:0;border-width:0 0 3px 3px}#scan .tg i:nth-child(4){right:0;bottom:0;border-width:0 3px 3px 0}
+.scr.scanning #scan .tg i{animation:lock .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes lock{0%{transform:scale(1.9);opacity:0}30%{opacity:1}100%{transform:scale(1)}}
+#scan .beam{position:absolute;left:0;right:0;height:18%;background:linear-gradient(transparent,rgba(53,224,255,.5),transparent);top:-18%;animation:beam 1s linear infinite}
+@keyframes beam{to{top:100%}}
+#scan .msg{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-family:Orbitron,sans-serif;font-size:calc(var(--s)*.036);letter-spacing:.16em;color:var(--cy);text-shadow:0 0 8px var(--cy)}
+.scr.scanning .vf .st{opacity:0}
+.scr.flash::after{content:"";position:absolute;inset:0;z-index:5;background:#fff;animation:fl .5s ease-out both;pointer-events:none}
+@keyframes fl{from{opacity:.7}to{opacity:0}}
+/* controls inside the screen */
+#ctl{position:absolute;left:5%;right:5%;bottom:calc(var(--s)*.1);z-index:7;display:flex;align-items:center;gap:.6em;padding:.35em .6em;border-radius:2em;background:rgba(4,10,24,.72);border:1px solid rgba(53,224,255,.4);backdrop-filter:blur(4px);opacity:0;transform:translateY(.6em);transition:opacity .25s,transform .25s}
+#phone:hover #ctl,#phone.show #ctl{opacity:1;transform:none}
+#ctl button{width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:rgba(53,224,255,.18);font-size:.8em;line-height:1}
+#ctl button:hover{background:rgba(53,224,255,.45)}
+#bar{flex:1;height:.4em;border-radius:1em;background:rgba(255,255,255,.2);position:relative;cursor:pointer}
+#bar b{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:1em;background:var(--cy);box-shadow:0 0 6px var(--cy)}
+#ctl{font-size:clamp(9px,calc(var(--s)*.05),14px)}
+#shadow{position:absolute;left:10%;right:10%;bottom:-3%;height:6%;border-radius:50%;background:radial-gradient(rgba(53,224,255,.55),transparent 70%);filter:blur(6px);z-index:-1}
+
+/* ---------- attract (bg) mode: only a title and the phone ---------- */
+#attract{display:none;position:fixed;z-index:3;left:calc(var(--ix) + 1em);top:calc(var(--top) + 3.8em);max-width:34%;padding:.55em .9em .65em;border-radius:1em;background:rgba(6,14,34,.88);border:.14em solid var(--cy);box-shadow:0 0 1.4em rgba(53,224,255,.5),inset 0 0 1em rgba(53,224,255,.12);pointer-events:none}
+#attract h1{font-size:clamp(1.4em,3.6vw,2.6em);line-height:1;color:#fff;text-shadow:0 0 .6em var(--cy)}
+#attract h1 b{color:var(--cy)}
+#attract p{font-size:.8em;letter-spacing:.16em;color:var(--lime);margin-top:.4em;font-weight:700;text-transform:uppercase}
+html.bgonly #attract{display:block}
+html.bgonly #list,html.bgonly #info,html.bgonly #top,html.bgonly #ctl,html.bgonly .vf .st{display:none}
+html.bgonly #ui{padding:0;position:fixed;inset:0}
+html.bgonly #main{display:block;position:absolute;left:56%;right:calc(var(--ix) + 3%);top:calc(var(--top) + 3.6em);height:30%}
+html.bgonly #stage{position:absolute;inset:0}
+
+@media (max-aspect-ratio:7/4){.it .n{display:none}.it{padding:.4em .8em}}
+/* ---------- squarer bays: tighter text so the phone stays big ---------- */
+@media (max-aspect-ratio:3/2) and (min-aspect-ratio:1/1){
+  #info{grid-template-columns:minmax(8em,11em) minmax(0,1fr) minmax(9em,13em);gap:.3em 1em;padding:.6em .9em}#info h2{font-size:1.1em}#info p{font-size:.82em;line-height:1.35}
+  .it{padding:.3em .75em}
+}
+/* ---------- portrait / narrow (the phone still lies on its side) ---------- */
+@media (max-aspect-ratio:1/1){
+  #ui{padding-top:calc(var(--top) + 3.3em)}
+  #top{left:calc(var(--ix) + 6em);right:calc(var(--ix) + 3.2em)}#top .tags{display:none}
+  #list{justify-content:flex-start}.it .n{display:none}
+  #info{grid-template-columns:1fr;grid-template-areas:"k" "h" "p" "ch";max-height:36%;padding:.7em .9em}#info h2{font-size:1.1em}#info p{font-size:.85em}#nav{display:none}#chips{justify-content:flex-start}
+  #attract{max-width:70%}
+  html.bgonly #main{left:auto;width:44%;height:22%}
+}
+@media (prefers-reduced-motion:reduce){#phone,#vid,#scan .beam,.vf .st::before,#scan .tg i{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="attract"><h1 class="hd">AR <b>Projects</b></h1><p>Built in Unity &middot; press the screen to enter</p></div>
+<div id="ui">
+  <header id="top"><h1 class="hd">AR <b>Projects</b></h1><div class="tags"><span class="tag">Unity</span><span class="tag">Image targets</span><span class="tag">Depth mask</span></div></header>
+  <main id="main">
+    <nav id="list" aria-label="AR experiences"></nav>
+    <section id="stage" aria-label="Phone showing the AR video">
+      <div id="phone">
+        <div class="scr" id="scr">
+          <video id="vbg" playsinline muted loop preload="auto" aria-hidden="true"></video>
+          <video id="vid" playsinline muted loop preload="auto" aria-label="AR experience video"></video>
+          <div id="scan"><div class="grid"></div><div class="beam"></div><div class="tg"><div class="mk"></div><i></i><i></i><i></i><i></i></div><div class="msg" id="msg"></div></div>
+          <div class="vf"><i></i><i></i><i></i><i></i><div class="st" id="st">AR &middot; TRACKING</div></div>
+          <div id="ctl"><button id="pp" aria-label="Play or pause">&#10074;&#10074;</button><div id="bar"><b id="fill"></b></div><button id="snd" aria-label="Sound on or off">&#128263;</button></div>
+        </div>
+        <div class="cam"></div>
+        <div id="shadow"></div>
+      </div>
+    </section>
+    <aside id="info" aria-live="polite">
+      <div class="k"><span id="kick"></span><span id="cnt"></span></div>
+      <h2 id="ttl"></h2>
+      <p id="txt"></p>
+      <div id="chips"></div>
+      <div id="nav"><button id="prev" aria-label="Previous">&#9664; PREV</button><button id="next" aria-label="Next">NEXT &#9654;</button></div>
+    </aside>
+  </main>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const HTML = document.documentElement;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- the five clips from the AR page (text is the page's own wording) ---------- */
+const ITEMS = [
+  { title: 'Aim of the project', tag: 'Overview', o: 'l', src: 'video/ar-aim.mp4', scan: 'STARTING AR SESSION',
+    txt: 'To get familiar with the UNITY Game Development engine. To understand aspects of designing AR Experiences in unity. To understand and internalize aspects of play through its application in a design project. Trying to make various AR applications.',
+    chips: ['Unity', 'AR experiences', 'Play'] },
+  { title: '3D Room Decor', tag: 'Image target', fx: 'rot', src: 'video/ar-room.mp4', scan: 'SCANNING IMAGE TARGET',
+    txt: 'Making a 3D Room Decor by tracking image targets, where one can change and customize any 3D objects in the model/scene. Here currently we are changing the color of the walls and flooring and also changing the bedsheet with help of the UI Buttons designed for this app.',
+    chips: ['Image target', 'Wall colour', 'Flooring', 'Bedsheet', 'UI buttons'] },
+  { title: 'AR Video Player', tag: 'Image target', o: 'l', src: 'video/ar-player.mp4', scan: 'SCANNING IMAGE TARGET',
+    txt: 'Making an AR video player, where we can play any video we want by scanning the image target we provide.',
+    chips: ['Image target', 'Video'] },
+  { title: '3D Image Targets', tag: '3D target', o: 'l', src: 'video/ar-targets.mp4', scan: 'TRACKING 3D TARGET',
+    txt: 'Making 3d image targets where one can track and move a 3D model/scene in any direction(x,y,z) they want. Overlaying 3D assets onto a 3D image target cube and interacting with the model/scene via UI buttons designed.',
+    chips: ['3D target cube', 'Move x · y · z', 'UI buttons'] },
+  { title: 'AR Car Garage', tag: 'Depth mask', fx: 'blur', src: 'video/ar-garage.mp4', scan: 'MAPPING DEPTH',
+    txt: 'Making an interactable car garage and applying a depth mask to bring in good visual effects for depth perception. Using AR Depth Mask.',
+    chips: ['Interactable', 'AR Depth Mask', 'Depth perception'] },
+];
+
+const list = $('list'), phone = $('phone'), scr = $('scr'), vid = $('vid'), vbg = $('vbg');
+let cur = -1, running = false, stageT = 0, swapT = 0, ctlT = 0;
+
+ITEMS.forEach((it, i) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'it'; b.dataset.i = i;
+  b.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><b>${it.title}</b><small>${it.tag}</small>`;
+  b.addEventListener('click', () => select(i));
+  list.appendChild(b);
+});
+
+/* the phone always lies on its side and fills the middle box */
+const RATIO = 0.476;
+function fit() {
+  const st = $('stage').getBoundingClientRect(); if (!st.width) return;
+  const mw = st.width * .98, mh = st.height * .98;
+  const w = Math.min(mw, mh / RATIO), h = w * RATIO;
+  phone.style.width = w + 'px'; phone.style.height = h + 'px'; phone.style.setProperty('--s', Math.min(w, h) + 'px');
+  phone.classList.add('land');
+}
+new ResizeObserver(fit).observe($('stage'));
+addEventListener('resize', fit);
+
+function setInfo(i) {
+  const it = ITEMS[i];
+  $('kick').textContent = it.tag; $('cnt').textContent = `${String(i + 1).padStart(2, '0')} / ${String(ITEMS.length).padStart(2, '0')}`;
+  $('ttl').textContent = it.title; $('txt').textContent = it.txt;
+  $('chips').innerHTML = it.chips.map(c => `<span>${c}</span>`).join('');
+  $('prev').disabled = i === 0; $('next').disabled = i === ITEMS.length - 1;
+  list.querySelectorAll('.it').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+  const on = list.querySelector('.it.on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+}
+
+/* clips are fetched whole and played from a blob URL, so the seek bar works even on servers without byte ranges */
+const blobs = {};
+const load = src => blobs[src] || (blobs[src] = fetch(src).then(r => { if (!r.ok) throw 0; return r.blob(); }).then(b => URL.createObjectURL(b)).catch(() => src));
+let selTok = 0;
+
+/* choose a clip: the phone scans a target, locks on, then the video appears */
+function select(i, quiet) {
+  if (i < 0 || i >= ITEMS.length || i === cur) return;
+  const it = ITEMS[i];
+  cur = i; clearTimeout(swapT);
+  setInfo(i);
+  vid.pause(); vbg.pause(); scr.classList.remove('live', 'flash'); scr.classList.add('scanning');
+  scr.classList.toggle('blurfill', it.fx === 'blur'); vid.classList.toggle('rot', it.fx === 'rot');
+  $('msg').textContent = it.scan + '…'; $('st').textContent = 'AR · SEARCHING';
+  fit();
+  const tok = ++selTok, wait = (ms, slot) => new Promise(r => { const id = setTimeout(r, reduce ? 0 : ms); if (slot) swapT = id; });
+  Promise.all([load(it.src), wait(quiet ? 500 : 1100, true)]).then(([url]) => {
+    if (tok !== selTok) return;
+    vid.src = url; vid.load(); $('msg').textContent = 'TARGET LOCKED';
+    if (it.fx === 'blur') { vbg.src = url; vbg.load(); } else vbg.removeAttribute('src');
+    return wait(520);
+  }).then(() => {
+    if (tok !== selTok) return;
+    scr.classList.remove('scanning'); scr.classList.add('live', 'flash'); $('st').textContent = 'AR · TRACKING'; $('msg').textContent = '';
+    const p = vid.play(); if (p && p.catch) p.catch(() => {});
+    if (it.fx === 'blur') vbg.play().catch(() => {});
+    syncPP();
+    if (ITEMS[i + 1]) load(ITEMS[i + 1].src);                  // the next clip is fetched while this one plays
+  });
+}
+
+/* video controls */
+const pp = $('pp'), snd = $('snd'), fill = $('fill'), bar = $('bar');
+function syncPP() { pp.innerHTML = vid.paused ? '&#9654;' : '&#10074;&#10074;'; snd.innerHTML = vid.muted ? '&#128263;' : '&#128266;'; }
+function showCtl() { phone.classList.add('show'); clearTimeout(ctlT); ctlT = setTimeout(() => phone.classList.remove('show'), 2600); }
+function toggle() { if (!scr.classList.contains('live')) return; if (vid.paused) vid.play().catch(() => {}); else vid.pause(); syncPP(); showCtl(); }
+pp.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+snd.addEventListener('click', e => { e.stopPropagation(); vid.muted = !vid.muted; syncPP(); showCtl(); });
+bar.addEventListener('click', e => { e.stopPropagation(); const r = bar.getBoundingClientRect(); if (vid.duration) vid.currentTime = vid.duration * Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); showCtl(); });
+scr.addEventListener('click', () => { if (!running) return; toggle(); });
+vid.addEventListener('timeupdate', () => { fill.style.width = (vid.duration ? vid.currentTime / vid.duration * 100 : 0) + '%'; });
+vid.addEventListener('play', () => { syncPP(); if (vbg.src) vbg.play().catch(() => {}); });
+vid.addEventListener('pause', () => { syncPP(); vbg.pause(); });
+vid.addEventListener('seeked', () => { if (vbg.src) vbg.currentTime = vid.currentTime; });
+vid.addEventListener('timeupdate', () => { if (vbg.src && Math.abs(vbg.currentTime - vid.currentTime) > .35) vbg.currentTime = vid.currentTime; });
+$('prev').addEventListener('click', () => select(cur - 1));
+$('next').addEventListener('click', () => select(cur + 1));
+
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { try { const x = parent.document.getElementById('hhExit'); if (x) x.click(); } catch (_) {} return; }
+  if (!running) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { select(cur + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { select(cur - 1); e.preventDefault(); }
+  else if (e.key === ' ') { toggle(); e.preventDefault(); }
+  else if (e.key === 'm' || e.key === 'M') { vid.muted = !vid.muted; syncPP(); }
+});
+
+/* host hook: the handheld's screen was pressed */
+window.gameStart = function () {
+  HTML.classList.remove('bgonly'); running = true;
+  select(0, true); fit();
+};
+
+/* attract view (and standalone): the overview clip loops silently in the phone */
+if (HTML.classList.contains('bgonly')) { cur = -1; fit(); select(0, true); }
+else if (!HTML.classList.contains('embed')) { running = true; select(0, true); }
+requestAnimationFrame(fit);
+
+/* ---------- background: an AR scene, a perspective floor grid, feature points and tracked wireframes ---------- */
+const cv = $('bg'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function size() { DPR = Math.min(devicePixelRatio || 1, 2); W = cv.width = Math.round(innerWidth * DPR); H = cv.height = Math.round(innerHeight * DPR); }
+size(); addEventListener('resize', () => { size(); if (reduce) draw(0); });
+const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+const PTS = Array.from({ length: 110 }, () => ({ x: rnd(), y: rnd() * .72, r: .6 + rnd() * 1.6, ph: rnd() * 6.28, sp: .5 + rnd() * 1.5 }));
+const CUBES = [{ x: .1, y: .3, s: .07, c: '#35e0ff', sp: .5 }, { x: .9, y: .26, s: .06, c: '#ff4fd8', sp: -.4 }, { x: .84, y: .66, s: .045, c: '#9dff6b', sp: .7 }, { x: .16, y: .72, s: .05, c: '#ffd24a', sp: -.6 }];
+const V = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+const E = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+function cube(c, t) {
+  const cx = c.x * W, cy = (c.y + Math.sin(t * .8 + c.x * 9) * .015) * H, s = c.s * Math.min(W, H) * 1.6, a = t * c.sp, b = t * c.sp * .7 + .6;
+  const P = V.map(([x, y, z]) => { const x1 = x * Math.cos(a) - z * Math.sin(a), z1 = x * Math.sin(a) + z * Math.cos(a), y1 = y * Math.cos(b) - z1 * Math.sin(b), z2 = y * Math.sin(b) + z1 * Math.cos(b), k = 1 / (1 + z2 * .18); return [cx + x1 * s * k, cy + y1 * s * k]; });
+  g.strokeStyle = c.c; g.lineWidth = 1.5 * DPR; g.globalAlpha = .75; g.beginPath(); E.forEach(([i, j]) => { g.moveTo(P[i][0], P[i][1]); g.lineTo(P[j][0], P[j][1]); }); g.stroke();
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs) - 8 * DPR, x1 = Math.max(...xs) + 8 * DPR, y0 = Math.min(...ys) - 8 * DPR, y1 = Math.max(...ys) + 8 * DPR, L = 9 * DPR;
+  g.globalAlpha = .9; g.beginPath(); [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]].forEach(([x, y, dx, dy]) => { g.moveTo(x + dx * L, y); g.lineTo(x, y); g.lineTo(x, y + dy * L); }); g.stroke(); g.globalAlpha = 1;
+}
+function draw(t) {
+  const hz = H * .6, gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#040712'); gr.addColorStop(.6, '#0a1a3a'); gr.addColorStop(1, '#07102a');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  const glow = g.createRadialGradient(W / 2, hz, 0, W / 2, hz, W * .5); glow.addColorStop(0, 'rgba(53,224,255,.2)'); glow.addColorStop(1, 'rgba(53,224,255,0)'); g.fillStyle = glow; g.fillRect(0, hz - W * .3, W, W * .6);
+  PTS.forEach(p => { const a = .35 + .65 * Math.abs(Math.sin(t * p.sp + p.ph)); g.fillStyle = `rgba(190,245,255,${a * .75})`; g.fillRect(p.x * W, p.y * H, p.r * DPR, p.r * DPR); });
+  g.strokeStyle = 'rgba(53,224,255,.26)'; g.lineWidth = DPR;                                  // floor: lines to the vanishing point, rows scrolling toward the viewer
+  g.beginPath(); for (let i = -14; i <= 14; i++) { g.moveTo(W / 2 + i * W * .012, hz); g.lineTo(W / 2 + i * W * .16, H); } g.stroke();
+  for (let k = 0; k < 12; k++) { const f = ((k + (t * .25 % 1)) / 12), y = hz + (H - hz) * f * f; g.globalAlpha = .15 + f * .5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } g.globalAlpha = 1;
+  CUBES.forEach(c => cube(c, t));
+  const sy = (t * .35 % 1) * H; const sw = g.createLinearGradient(0, sy - 40 * DPR, 0, sy + 40 * DPR); sw.addColorStop(0, 'rgba(53,224,255,0)'); sw.addColorStop(.5, 'rgba(53,224,255,.07)'); sw.addColorStop(1, 'rgba(53,224,255,0)'); g.fillStyle = sw; g.fillRect(0, sy - 40 * DPR, W, 80 * DPR);
+}
+if (reduce) draw(0); else (function loop(ms) { draw(ms / 1000); requestAnimationFrame(loop); })(0);
+</script>
+</body>
+</html>

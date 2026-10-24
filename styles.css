@@ -1,0 +1,464 @@
+  :root{
+    --room:#13034c;      /* matches the room art's outer band */
+    --pink:#ff3fd0;
+    --cyan:#3de0ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--room);color:#fff;font-family:"Avenir Next","Trebuchet MS","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  /* no scroll anchoring: the pinned stage changes every frame and Chrome would keep nudging the scroll (page drifts on its own) */
+  html,body{scroll-behavior:auto;overflow-anchor:none}
+
+  /* The scroller gives us scroll distance; the stage stays pinned. */
+  #scroller{position:relative;height:2700vh}   /* 16 screens for the room, then the column slides through the boards and the cassette room */
+  #stage{position:sticky;top:0;height:100vh;height:100dvh;width:100%;overflow:clip;background:var(--room);isolation:isolate}
+  #column{position:absolute;left:0;top:0;width:100%}   /* no will-change: it froze the zooming room layers at a stale raster (blank patches) */
+  #roomView{position:relative;height:100vh;height:100dvh;overflow:clip}
+  #scroller{background:#1a0b56}
+  #cam{position:absolute;inset:0;transform-origin:50% 50%}
+  #roomSky{position:absolute;inset:0;width:100%;height:100%;display:block;background:#010006}
+
+  /* Layers live in the room image's pixel space (1280 x 1024). */
+  .layer{position:absolute;left:0;top:0;width:1280px;height:1024px;transform-origin:0 0;pointer-events:none}
+  .roomsvg{position:absolute;left:0;top:0;width:1280px;height:1024px;overflow:visible;display:block}
+  /* composited from the layered PSD at 3x scene resolution. #front is the lower band of the same
+     image (hand, sleeve, front shoe — back leg removed) drawn above the wall, pixel-aligned */
+  /* positions include the 32-unit drop that puts the hand and shoe over the wall edge */
+  #character{position:absolute;left:369.152px;top:328.448px;width:710.333px;height:409.667px;display:block}
+  #front{position:absolute;left:369.152px;top:662.115px;width:710.333px;height:76px;display:block}
+  .wind{position:absolute;display:block}
+  /* the ninja's room run: one sprite that moves between the room layer and the foreground layer */
+  .hopwrap{position:absolute;left:0;top:0;width:0;height:0}
+  .hop{position:absolute;left:0;top:0;transform-origin:0 0;background-repeat:no-repeat;pointer-events:none}
+  .hopShadow{position:absolute;left:0;top:0;width:40px;height:10px;border-radius:50%;transform-origin:50% 50%;
+             background:radial-gradient(closest-side,rgba(8,0,30,.7),rgba(8,0,30,0))}
+
+  /* floating intro card on the palm */
+  .card{position:absolute;left:356px;top:502px;min-width:372px;padding:14px 58px 11px 18px;border-radius:7px;color:#fff;
+        background:linear-gradient(160deg,rgba(92,64,245,.74),rgba(44,26,165,.8));
+        border:1.5px solid rgba(196,178,255,.6);
+        box-shadow:0 0 26px rgba(120,90,255,.55),0 14px 30px rgba(10,2,40,.45),inset 0 1px 0 rgba(255,255,255,.28);
+        font-family:"Quicksand","Avenir Next","Trebuchet MS",system-ui,sans-serif;opacity:0;transform-origin:50% 50%;
+        pointer-events:none;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+  .card:active{cursor:grabbing}
+  .card-title{font-size:27px;font-weight:700;line-height:1.1;letter-spacing:.2px;white-space:nowrap;text-shadow:0 2px 0 rgba(20,5,60,.45)}
+  .card-sub{display:flex;align-items:center;gap:12px;margin:10px -9px 0;padding:6px 9px;border-radius:5px;background:rgba(26,12,100,.45)}
+  .aliens{display:flex;gap:3px}
+  .aliens svg{width:21px;height:21px;display:block}
+  .aliens svg.dim{opacity:.35}
+  .rec{font-size:15.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+  .card-go{position:absolute;right:13px;top:13px;width:30px;height:30px;border:2px solid rgba(196,178,255,.75);border-radius:50%;display:grid;place-items:center}
+
+  /* The desk rig is drawn in its own 1920x1080 units and scaled into the room. */
+  .rig{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;
+       transform:translate(408.4px,244px) scale(.2023)}
+  .rig > svg{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:visible;display:block}
+
+  .sprite{position:absolute;left:0;top:0;width:320px;height:380px;transform-origin:0 0;
+          background-size:1600px 1900px;background-repeat:no-repeat;opacity:0}
+  #sprRun{background-image:url(assets/ninja-run-down.png)}
+  #sprIdle{background-image:url(assets/ninja-idle-down.png)}
+  .ellipse{position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;pointer-events:none}
+  #shadow{background:radial-gradient(closest-side,rgba(8,0,30,.75),rgba(8,0,30,0));width:240px;height:56px}
+  #aura{width:420px;height:420px;background:radial-gradient(closest-side,rgba(40,255,170,.34),rgba(255,60,220,.12) 55%,rgba(0,0,0,0));mix-blend-mode:screen}
+  .ring{border:5px solid rgba(255,150,245,.9);box-shadow:0 0 30px rgba(255,70,220,.8), inset 0 0 30px rgba(120,160,255,.6);opacity:0}
+  #dust{border:4px solid rgba(190,170,255,.8);box-shadow:0 0 26px rgba(160,120,255,.7);opacity:0}
+
+  /* screen-space overlays */
+  .ov{position:absolute;inset:0;pointer-events:none}
+  #vignette{background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 50%,rgba(8,0,30,.5) 100%)}
+  #flash{background:radial-gradient(circle at 50% 55%,#fff 0%,#ffb6f5 30%,rgba(255,60,220,.0) 75%);opacity:0;mix-blend-mode:screen}
+  #grain{opacity:.06;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>")}
+
+  #hint{pointer-events:none;position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);
+        display:flex;flex-direction:column;align-items:center;gap:10px;font-size:12px;letter-spacing:.42em;text-transform:uppercase;
+        color:#fff;text-shadow:0 0 14px rgba(255,63,208,.9);transition:opacity .35s,visibility 0s}
+  #hint.off{opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
+  #hint.off i::after{animation:none}
+  #hint i{display:block;width:22px;height:36px;border:2px solid #fff;border-radius:14px;position:relative;box-shadow:0 0 14px rgba(255,63,208,.8), inset 0 0 8px rgba(255,63,208,.5)}
+  #hint i::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:#fff;animation:wheel 1.5s ease-in-out infinite}
+  @keyframes wheel{0%{transform:translateY(0);opacity:1}70%{transform:translateY(12px);opacity:0}100%{opacity:0}}
+
+  #bar{position:absolute;right:clamp(10px,2vw,28px);top:50%;width:3px;height:120px;margin-top:-60px;border-radius:2px;background:rgba(255,255,255,.16)}
+  #bar b{position:absolute;left:0;top:0;width:100%;height:0;border-radius:2px;background:linear-gradient(var(--pink),var(--cyan));box-shadow:0 0 10px var(--pink)}
+  #dbg{position:absolute;left:10px;top:10px;font:12px/1.4 ui-monospace,monospace;color:#9ff;display:none}
+
+  /* ===== the wall between the scenes: digital ticker board ===== */
+  #eduBand{--rh:clamp(48px,7vh,64px);position:relative;height:calc(clamp(250px,38vh,390px) + (var(--rh) + clamp(18px,4vh,40px)) * .55);   /* the wall already had spare room: grow it by about half the new board */background:#1a0b56;display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,4vh,40px);padding:0 7.5%}
+  /* monumental building wall (built by the "building walls" script): dark stone panels, thin neon */
+  .wallsvg{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0}
+  .wallsvg .neon,#facadeArt .neon{animation:neonBreathe 6s ease-in-out infinite}
+  @keyframes neonBreathe{0%,100%{opacity:1}50%{opacity:.6}}
+  @media (prefers-reduced-motion: reduce){.wallsvg .neon,#facadeArt .neon{animation:none}}
+  #facadeArt{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;overflow:visible}
+  #eduBand::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;z-index:1;pointer-events:none;
+        background:linear-gradient(#0c0434,#241270 70%,#3a26a8);box-shadow:0 1px 0 rgba(159,243,255,.22)}
+  .board{z-index:1;transform:translateY(var(--bshift,0px));position:relative;width:100%;height:clamp(76px,11vh,108px);display:flex;gap:8px;padding:8px;border-radius:12px;
+        background:linear-gradient(#3e26b0,#1f0e66);border:2px solid #12052b;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(201,191,255,.25),0 12px 30px rgba(5,0,25,.55),0 0 30px rgba(120,90,255,.35)}
+  .board-badge{flex:0 0 auto;display:flex;align-items:center;padding:0 clamp(12px,1.6vw,22px);border-radius:7px;background:linear-gradient(#2a1680,#170848);
+        font:800 clamp(13px,2.1vh,20px)/1.2 "Avenir Next","Segoe UI",system-ui,sans-serif;letter-spacing:.1em;color:#d4fbff;text-shadow:0 0 10px rgba(80,220,255,.7)}
+  .board-screen{position:relative;flex:1;min-width:0;border-radius:7px;overflow:hidden;background:#06021a;box-shadow:inset 0 0 22px rgba(0,0,0,.85)}
+  .board-screen::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;     /* LED dot-matrix, behind the letters */
+        background:radial-gradient(circle,rgba(120,100,255,.13) 0 1px,rgba(0,0,0,0) 1.5px) 0 0/4px 4px}
+  .board-screen::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;      /* edge fade */
+        background:linear-gradient(90deg,#06021a,rgba(6,2,26,0) 5%,rgba(6,2,26,0) 95%,#06021a)}
+  .board-track{position:absolute;z-index:1;left:0;top:0;bottom:0;display:flex;align-items:center;margin:0;padding:0;list-style:none;white-space:nowrap;will-change:transform}
+  .board-track li{display:inline-flex;align-items:center;gap:14px;padding:0 30px;color:color-mix(in srgb,var(--col) 45%,#fff);
+        font:800 clamp(20px,3.3vh,34px)/1 "Avenir Next","Segoe UI",system-ui,sans-serif;letter-spacing:.02em;
+        text-shadow:0 0 1px var(--col),0 0 8px color-mix(in srgb,var(--col) 55%,transparent)}
+  .board-track li::after{content:"◆";margin-left:26px;font-size:.55em;color:#ff7bea;text-shadow:0 0 8px #ff4be0}
+  .board-track b{font:800 .48em/1 "Avenir Next","Segoe UI",system-ui,sans-serif;letter-spacing:.14em;padding:5px 7px;border-radius:4px;
+        color:#06021a;background:var(--col);text-shadow:none;box-shadow:0 0 8px color-mix(in srgb,var(--col) 60%,transparent)}
+  .board-ai{background:linear-gradient(#1f7a6a,#0f3a4a)}
+  .board-ai .board-badge{background:linear-gradient(#155a54,#0b2a33);color:#9dffcf;text-shadow:0 0 8px rgba(80,255,190,.8)}
+  /* resume board: a slimmer gold-magenta board above the two ticker boards; the whole board is a button */
+  .board-resume{height:var(--rh);width:clamp(260px,46%,560px);align-self:center;padding:6px;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent;
+        background:linear-gradient(#b02a68,#4a0f55);transition:box-shadow .2s,filter .2s}
+  .board-resume .board-badge{background:linear-gradient(#7a1650,#3a0a3e);color:#ffe9a8;text-shadow:0 0 8px rgba(255,200,80,.85);font-size:clamp(11px,1.9vh,17px)}
+  .board-resume .board-track li{font-size:clamp(14px,2.4vh,22px)}
+  .board-resume:hover,.board-resume:focus-visible{filter:brightness(1.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,226,122,.55),0 12px 30px rgba(5,0,25,.55),0 0 34px rgba(255,200,80,.55)}
+  .board .bolt{position:absolute;width:6px;height:6px;border-radius:50%;background:#c9bfff;box-shadow:0 0 0 1.5px #12052b}
+  .board .b1{left:-14px;top:12px}.board .b2{left:-14px;bottom:12px}.board .b3{right:-14px;top:12px}.board .b4{right:-14px;bottom:12px}
+  @media (prefers-reduced-motion: reduce){.board-track{position:static;flex-wrap:wrap;white-space:normal;padding:6px 0}}
+  @media (max-width: 600px){#eduBand{padding:0 4%}.board-badge{padding:0 9px;font-size:11px;letter-spacing:.06em}.board{gap:6px;padding:6px}}
+
+  /* ===== section 2: VR room ===== */
+  #vrStage{position:relative;height:100vh;height:100dvh;width:100%;overflow:clip;background:#06021a}
+  #space{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* outside of the building: a flat front wall with one big window; the scene is seen through it */
+  /* outside of the building: one plain wall (same as the wall above) with a big window; the scene is seen through it */
+  #vrFacade{position:absolute;inset:0;pointer-events:none;--side:0px;--top:14%;--fb:12%}
+  #vrFacade .fc{position:absolute;pointer-events:auto;background:#120b38;overflow:hidden}
+  #vrFacade .fc-top{left:0;right:0;top:0;height:var(--top)}
+  #vrFacade .fc-left,#vrFacade .fc-right{display:none}   /* no side walls: the building stands on two pillars (drawn in #facadeArt) */
+  #vrFacade .fc-bottom{left:0;right:0;bottom:0;height:var(--fb)}
+  /* window reveal: the thickness of the wall on the inside edges of the opening */
+  #vrFacade .rv{position:absolute;pointer-events:none}
+  #vrFacade .rv-top{left:var(--side);right:var(--side);top:var(--top);height:16px;background:linear-gradient(#0c0434,#2c168a);
+        clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,14px 100%)}
+  #vrFacade .rv-bottom{left:var(--side);right:var(--side);bottom:var(--fb);height:16px;background:linear-gradient(#5a44d8,#3a22a8);
+        clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 100%,0 100%)}
+  #vrFacade .rv-left{display:none;left:var(--side);top:var(--top);bottom:var(--fb);width:14px;background:linear-gradient(90deg,#160850,#3a22a8);
+        clip-path:polygon(0 0,100% 16px,100% calc(100% - 16px),0 100%)}
+  #vrFacade .rv-right{display:none;right:var(--side);top:var(--top);bottom:var(--fb);width:14px;background:linear-gradient(270deg,#160850,#3a22a8);
+        clip-path:polygon(0 16px,100% 0,100% 100%,0 calc(100% - 16px))}
+  #vrFacade .edge{display:none;position:absolute;left:var(--side);right:var(--side);top:var(--top);bottom:var(--fb);border:2px solid rgba(201,191,255,.75);
+        box-shadow:0 0 14px rgba(255,75,224,.35),inset 0 0 18px rgba(120,90,255,.25);pointer-events:none}
+  #vrWorld,#vrFront{position:absolute;left:0;top:0;width:1280px;height:1024px;transform-origin:0 0}
+  #vrFront{pointer-events:none}
+  #descent{position:absolute;inset:0;z-index:30;pointer-events:none}
+  #njfx{position:absolute;inset:0;width:100%;height:100%;z-index:31;pointer-events:none;display:block}
+  .pcard.out .cart{box-shadow:inset 0 4px 0 rgba(255,255,255,.35),inset 0 -10px 0 rgba(0,0,0,.28),0 0 26px var(--glow),0 26px 34px rgba(5,0,25,.6)}
+  .vrsvg{position:absolute;left:0;top:0;width:1280px;height:1024px;overflow:visible;display:block;pointer-events:none}
+  /* soft violet rim behind the character so he separates from the dark sky */
+  #vrWorld::before{content:"";position:absolute;left:300px;top:120px;width:700px;height:760px;border-radius:50%;z-index:2;pointer-events:none;
+        background:radial-gradient(closest-side,rgba(140,90,255,.30),rgba(255,70,210,.10) 55%,rgba(0,0,0,0))}
+  #vrChar{position:absolute;left:337.42px;top:140.09px;width:623px;height:833.94px;z-index:50;pointer-events:none;user-select:none}
+  #vrConsole{position:absolute;left:312px;top:511.14px;width:707.87px;height:469.86px;z-index:120;pointer-events:none;user-select:none}
+  #vrConsole,#cartLabel,#consoleScreen{display:none !important}   /* handheld console (with the hands, cartridge and screen) removed at Manish's request */
+  #v2Sparkles{position:absolute;inset:0;z-index:30;pointer-events:none}
+  .spark{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;animation:twinkle 2.6s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.35;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(20deg)}}
+
+  /* revolving cards: real buttons, positioned every frame */
+  .orbit{position:absolute;inset:0;pointer-events:none}
+  .pcard{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;border:0;padding:0;margin:0;background:none;
+         font-family:"Quicksand","Avenir Next","Trebuchet MS",system-ui,sans-serif;color:#fff;transform-origin:50% 50%;will-change:transform}
+  /* cards are game cartridges: coloured shell, ridged top, side grips, recessed label, gold contacts */
+  .pcard .cart{position:relative;display:block;width:250px;height:164px;border-radius:15px 15px 9px 9px;
+         background:linear-gradient(160deg,var(--s1),var(--s2));border:3px solid #12052b;
+         box-shadow:inset 0 4px 0 rgba(255,255,255,.35),inset 0 -10px 0 rgba(0,0,0,.28),0 0 24px var(--glow),0 12px 26px rgba(8,0,30,.45);transition:filter .2s,box-shadow .2s}
+  .pcard .cart::before{content:"";position:absolute;left:20px;right:20px;top:-14px;height:14px;border:3px solid #12052b;border-bottom:0;
+         border-radius:9px 9px 0 0;background:linear-gradient(var(--s1),var(--s2))}
+  .pcard .grip{position:absolute;top:28px;bottom:38px;width:11px;border-radius:2px;background:repeating-linear-gradient(0deg,rgba(10,2,30,.55) 0 2.5px,transparent 2.5px 7px)}
+  .pcard .grip.l{left:8px}.pcard .grip.r{right:8px}
+  .pcard .label{position:absolute;left:26px;right:26px;top:18px;bottom:34px;display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:9px;text-align:left;
+         background:linear-gradient(135deg,var(--c1),var(--c2));border:2.5px solid #12052b;box-shadow:inset 0 2px 0 rgba(255,255,255,.3)}
+  .pcard .label svg{flex:0 0 42px;width:42px;height:42px}
+  .pcard .label span{font-size:19px;font-weight:700;line-height:1.1;text-shadow:0 2px 0 rgba(20,5,60,.4)}
+  /* cassette face with the project's thumbnail and site title; the keywords scroll in an LED strip under the label */
+  .pcard .label.thumb{bottom:40px;display:block;padding:0;overflow:hidden;background:#12052b}
+  .pcard .label.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .pcard .label.thumb.contain{background:#fff}
+  .pcard .label.thumb.contain img{object-fit:contain;padding:4px 4px 30px}
+  .pcard .label.thumb .lt{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font-size:12.5px;font-weight:700;line-height:1.15;text-align:center;
+         background:linear-gradient(rgba(18,5,43,0),rgba(18,5,43,.82) 42%,rgba(18,5,43,.92));text-shadow:0 1px 2px rgba(0,0,0,.8)}
+  .pcard .tags{position:absolute;left:26px;right:26px;bottom:20px;height:15px;overflow:hidden;border-radius:3px;background:#06021a;border:1.5px solid #12052b;
+         box-shadow:inset 0 0 6px rgba(0,0,0,.9)}
+  .pcard .tags .tt{position:absolute;left:0;top:0;display:flex;white-space:nowrap;animation:tagRoll var(--td,20s) linear infinite}
+  .pcard .tags .tt span{padding:0 18px 0 6px;font:700 9px/12px ui-monospace,Menlo,monospace;letter-spacing:.04em;color:#9ff3ff;text-shadow:0 0 5px rgba(80,220,255,.8)}
+  @keyframes tagRoll{to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.pcard .tags .tt{animation:none}}
+  .pcard .contacts{position:absolute;left:52px;right:52px;bottom:7px;height:11px;border-radius:2px;opacity:.8;
+         background:repeating-linear-gradient(90deg,#ffd27a 0 5px,rgba(10,2,30,.6) 5px 10px)}
+  .pcard.chip .cart{width:auto;height:auto;border-radius:8px 8px 6px 6px;padding:7px 13px 12px}
+  .pcard.chip .cart::before{left:14px;right:14px;top:-9px;height:9px;border-radius:6px 6px 0 0}
+  .pcard.chip .label{position:static;padding:5px 12px;border-radius:5px}
+  .pcard.chip .label span{font-size:16px;white-space:nowrap}
+  .pcard:hover .cart,.pcard:focus-visible .cart{filter:brightness(1.15);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),inset 0 -8px 0 rgba(0,0,0,.28),0 0 32px rgba(255,90,230,.8),0 10px 22px rgba(8,0,30,.45)}
+  .pcard:focus-visible{outline:none}
+  .pcard:focus-visible .cart{outline:3px solid #9ff3ff;outline-offset:4px}
+
+  /* console screen + cartridge label (content decided later) */
+  #consoleScreen{position:absolute;left:579.5px;top:673.5px;width:177.3px;height:131.2px;z-index:121;border-radius:4px;overflow:hidden;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;color:#bff6ff;
+         font:700 9px/1.2 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.12em;
+         background:radial-gradient(ellipse at 50% 40%,rgba(80,60,220,.35),rgba(20,8,70,0) 70%)}
+  #consoleScreen::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);pointer-events:none}
+  #consoleScreen .cs-title{font:700 15px/1.15 "Quicksand","Avenir Next",system-ui,sans-serif;letter-spacing:0;color:#fff;max-width:150px;text-shadow:0 0 10px rgba(255,90,230,.8)}
+  #consoleScreen .cs-hint{opacity:.75;animation:blinkHint 1.4s steps(2) infinite}
+  @keyframes blinkHint{50%{opacity:.25}}
+  #cartLabel{position:absolute;left:587.7px;top:560.8px;width:159.9px;height:60.5px;z-index:121;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         font-family:"Quicksand","Avenir Next",system-ui,sans-serif;color:#fff;text-shadow:0 1px 0 rgba(10,4,40,.6);pointer-events:none}
+  #cartLabel span{font-size:17px;font-weight:700;letter-spacing:.18em}
+  #cartLabel b{font-size:7.5px;letter-spacing:.2em;opacity:.85}
+
+  /* ===== the handheld universe ===== */
+  #hhStage{position:relative;height:100vh;height:100dvh;width:100%;overflow:clip;background:#12002a}
+  #hhStage.quake{animation:quake .42s cubic-bezier(.3,.7,.4,1)}
+  @keyframes quake{0%{transform:translate(0,0)}15%{transform:translate(-7px,9px)}30%{transform:translate(6px,-5px)}45%{transform:translate(-4px,4px)}60%{transform:translate(3px,-2px)}80%{transform:translate(-1px,1px)}100%{transform:none}}
+  #hhWorld,#hhFrame{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+  #hhFrame{z-index:5}   /* the pillars and lintel sit above the world and the game */
+  #hhRig{position:absolute;left:50%;bottom:calc(var(--hdrop,0px) * -1);width:1728px;height:1143px;transform-origin:50% 100%}
+  #hhShake{position:absolute;inset:0;transform-origin:50% 100%}
+  #hhShake.hit{animation:hhHit .55s cubic-bezier(.2,.8,.3,1)}
+  @keyframes hhHit{0%{transform:none}18%{transform:translateY(34px) scaleY(.975)}40%{transform:translateY(-12px)}62%{transform:translateY(5px)}100%{transform:none}}
+  #hhArt{position:absolute;left:0;top:300px;width:1728px;height:843px;display:block;user-select:none;pointer-events:none}
+  /* the cartridge slot: the inserted cassette sits behind the console's top edge */
+  #hhSlot{position:absolute;left:865px;top:300px;width:0;height:0}
+  #hhSlot .pcard{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-100%) translateY(var(--ins,24px)) scale(1.6);transform-origin:50% 100%;transition:transform .14s cubic-bezier(.5,0,.8,.6)}
+  #hhSlot .pcard.eject{transition:transform .55s cubic-bezier(.2,.7,.3,1),opacity .55s;opacity:0}
+  #hhScreen{position:absolute;left:641px;top:386px;width:452px;height:338px;border:0;padding:20px;border-radius:6px;cursor:pointer;overflow:hidden;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:#bff6ff;
+         font:700 20px/1.2 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.16em;
+         background:radial-gradient(ellipse at 50% 40%,rgba(90,60,230,.55),rgba(20,6,70,.15) 70%),linear-gradient(160deg,rgba(30,20,110,.35),rgba(60,10,90,.35))}
+  #hhScreen::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 5px);pointer-events:none}
+  #hhScreen:focus-visible{outline:4px solid #9ff3ff;outline-offset:6px}
+  #hhScreen .hs-title{font:700 40px/1.12 "Quicksand","Avenir Next",system-ui,sans-serif;letter-spacing:0;color:#fff;text-shadow:0 0 18px rgba(255,90,230,.85)}
+  #hhScreen .hs-hint{font-size:16px;opacity:.8;animation:blinkHint 1.4s steps(2) infinite}
+  #hhScreen.boot{animation:boot .7s steps(1)}
+  #hhScreen.boot > *{animation:glitch .7s}
+  @keyframes boot{0%{background:#fff}8%{background:#bff6ff}16%{background:#120040}30%{background:#3a1aa0}42%{background:#120040}}
+  @keyframes glitch{0%,40%{opacity:0;transform:translateX(0)}48%{opacity:1;transform:translateX(-8px) skewX(-12deg)}56%{transform:translateX(6px)}64%{transform:none}100%{opacity:1}}
+  #hhNinja{z-index:5}
+  #hhShake{transition:transform .6s cubic-bezier(.5,0,.75,0)}
+  #hhStage.playing #hhShake{transform:translateY(115%)}
+  #hhStage.playing #hhSlot .pcard{visibility:hidden}
+  #hhSlot .pcard.swap{transition:transform .26s cubic-bezier(.5,0,.8,.6)}
+  /* world switcher under the lintel */
+  #hhNav{position:absolute;left:50%;top:calc(var(--beam,60px) + 14px);transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:10px;
+         padding:6px 8px;border-radius:999px;background:rgba(10,4,40,.55);border:1px solid rgba(201,191,255,.35);backdrop-filter:blur(4px);
+         font:700 12px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.12em;color:#d9d2ff;white-space:nowrap;transition:opacity .3s}
+  #hhNav button{width:26px;height:26px;border:0;border-radius:50%;background:rgba(122,92,255,.35);color:#fff;font-size:11px;cursor:pointer}
+  #hhNav button:hover{background:rgba(255,75,224,.55)}
+  #hhNav button:focus-visible{outline:2px solid #9ff3ff;outline-offset:2px}
+  #hhNav b{color:#9ff3ff}
+  #hhStage.playing #hhNav{opacity:0;pointer-events:none}
+  @media (max-width:600px){#hhNav .hn-hint{display:none}}
+  /* the game, between the pillars */
+  #hhGame{position:absolute;left:var(--bl,8%);right:var(--bl,8%);top:calc(var(--beam,60px) - 2px);bottom:0;z-index:4;pointer-events:none}
+  #hhStage.playing #hhGame{pointer-events:auto}
+  #hhRig{z-index:6}   /* hands in front of the pillars */
+  body.in-hh #hint{opacity:0!important}   /* no scroll hint over the handheld / game controls */
+  #hhStage.playing #hhRig,#hhStage.playing #hhRig *{pointer-events:none}   /* hands are away: taps and drags reach the game */
+  #hhGame iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:normal}
+  /* the cassette parks top left: tap it for the design document */
+  #hhCart{position:absolute;left:calc(var(--pc,12px) - 125px * var(--cs,.5));top:calc(var(--beam,60px) + 34px);z-index:7;width:250px;height:164px;padding:0;border:0;background:none;cursor:pointer;
+          transform-origin:0 0;transform:scale(var(--cs,.5));transition:transform .55s cubic-bezier(.2,.8,.3,1)}
+  #hhCart .pcard{position:absolute;left:0;top:0;pointer-events:none}
+  #hhCart .hc-cap{position:absolute;left:-20px;right:-20px;top:174px;text-align:center;white-space:pre-line;font:700 calc(10px / var(--cs,.5))/1.15 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#9ff3ff;text-shadow:0 0 calc(6px / var(--cs,.5)) rgba(80,220,255,.8)}
+  #hhCart.nodoc{cursor:default;pointer-events:none}
+  #hhCart.nodoc .hc-cap{display:none}
+  #hhCart:hover .cart,#hhCart:focus-visible .cart{filter:brightness(1.2)}
+  #hhCart:focus-visible{outline:3px solid #9ff3ff;outline-offset:6px}
+  #hhExit{position:absolute;top:calc(var(--beam,60px) + 34px);right:max(2px,calc(var(--pc,12px) - 17px));z-index:7;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(201,191,255,.6);
+          background:rgba(20,8,70,.8);color:#fff;font:400 22px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 0 16px rgba(255,75,224,.5)}
+  #hhExit:hover{background:rgba(255,75,224,.6)}
+  #hhExit:focus-visible{outline:2px solid #9ff3ff;outline-offset:3px}
+  #dropLayer{position:absolute;inset:0;z-index:33;pointer-events:none}
+  #dropLayer .pcard{position:absolute;left:0;top:0;pointer-events:none;transform-origin:50% 50%}
+
+  /* details panel */
+  #cardPanel{position:absolute;inset:0;z-index:60;display:grid;place-items:center;background:rgba(8,2,30,.55);backdrop-filter:blur(3px)}
+  #cardPanel[hidden]{display:none}
+  .cp-box{position:relative;width:min(440px,calc(100vw - 32px));padding:28px 26px 24px;border-radius:12px;color:#fff;
+         background:linear-gradient(160deg,rgba(92,64,245,.92),rgba(44,26,165,.95));border:1.5px solid rgba(196,178,255,.6);
+         box-shadow:0 0 40px rgba(120,90,255,.6),0 20px 50px rgba(5,0,25,.6);font-family:"Quicksand","Avenir Next",system-ui,sans-serif}
+  .cp-kicker{font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;color:#9ff3ff}
+  .cp-box h2{margin:10px 0 8px;font-size:28px;line-height:1.15}
+  .cp-box p{margin:0;opacity:.85;font-size:15px}
+  .cp-close{position:absolute;right:12px;top:10px;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(196,178,255,.7);background:transparent;color:#fff;font-size:20px;cursor:pointer}
+  .cp-close:focus-visible{outline:3px solid #9ff3ff;outline-offset:2px}
+
+/* ---------- design-document book (over the open game) ---------- */
+#hhBook{position:absolute;left:var(--bl,8%);right:var(--bl,8%);top:calc(var(--beam,60px) - 2px);bottom:0;z-index:9;display:flex;flex-direction:column;outline:none;
+        background:radial-gradient(120% 90% at 50% 40%,rgba(30,16,70,.9),rgba(6,4,18,.94));backdrop-filter:blur(3px);opacity:0;transition:opacity .25s ease}
+#hhBook[hidden]{display:none}
+#hhBook.shown{opacity:1}
+#hhBook .bk-bar{display:flex;align-items:center;gap:12px;padding:8px 10px 0 14px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#9ff3ff;text-shadow:0 0 6px rgba(80,220,255,.7)}
+#hhBook .bk-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#hhBook .bk-count{color:#c9bfff;text-shadow:none;white-space:nowrap}
+#hhBook .bk-close{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(201,191,255,.6);background:rgba(20,10,50,.8);color:#e8e2ff;font:400 20px/1 system-ui,sans-serif;cursor:pointer;padding:0}
+#hhBook .bk-close:hover,#hhBook .bk-close:focus-visible{background:rgba(90,50,200,.8);outline:none}
+#hhBook .bk-stage{position:relative;flex:1;min-height:0;margin:6px 46px 10px;display:grid;place-items:center;perspective:2200px}
+#hhBook .bk-msg{position:absolute;inset:0;display:grid;place-items:center;color:#c9bfff;font:600 13px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-align:center;padding:0 20px}
+#hhBook .bk-nav{position:absolute;top:50%;margin-top:-20px;width:36px;height:40px;border-radius:10px;border:1.5px solid rgba(201,191,255,.5);background:rgba(20,10,50,.75);color:#e8e2ff;font-size:14px;cursor:pointer;padding:0}
+#hhBook .bk-prev{left:5px}#hhBook .bk-next{right:5px}
+#hhBook .bk-nav:hover:not(:disabled),#hhBook .bk-nav:focus-visible{background:rgba(90,50,200,.8);outline:none}
+#hhBook .bk-nav:disabled{opacity:.25;cursor:default}
+#hhBook .bk-book{position:relative;transform-style:preserve-3d;border-radius:4px;background:#241047;box-shadow:0 0 0 5px #2d1760,0 0 0 6px rgba(201,191,255,.35),0 18px 40px rgba(0,0,0,.6)}
+#hhBook .bk-book:not(.cover):not(.single-book)::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:46px;margin-left:-23px;pointer-events:none;z-index:4;
+        background:linear-gradient(90deg,transparent,rgba(0,0,0,.22) 46%,rgba(0,0,0,.34) 50%,rgba(0,0,0,.22) 54%,transparent)}
+#hhBook.single .bk-book::after{display:none}
+#hhBook .bk-pg{position:absolute;top:0;width:var(--pw);height:100%;background:#fff;overflow:hidden;cursor:pointer}
+#hhBook .bk-l{left:0}#hhBook .bk-r{left:var(--pw)}
+#hhBook.single .bk-l{display:none}
+#hhBook.single .bk-r{left:0}
+#hhBook .bk-pg.empty{background:#1b0d3a;cursor:default}
+#hhBook .bk-pg.wait{background:linear-gradient(100deg,#f4f1ff 30%,#fff 50%,#f4f1ff 70%) 0 0/200% 100%;animation:bkWait 1.1s linear infinite}
+@keyframes bkWait{to{background-position:-200% 0}}
+#hhBook .bk-pg canvas{width:100%;height:100%;display:block}
+#hhBook .bk-leaf{position:absolute;top:0;height:100%;width:var(--pw);transform-style:preserve-3d;z-index:3}
+#hhBook .bk-leaf[hidden]{display:none}
+#hhBook .bk-leaf.fwd{left:var(--pw);transform-origin:left center}
+#hhBook .bk-leaf.back{left:0;transform-origin:right center}
+#hhBook .bk-leaf .bk-pg{left:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+#hhBook .bk-leaf .bk-back{transform:rotateY(180deg)}
+#hhBook .bk-leaf.slide{left:0;width:var(--pw);transform-style:flat}
+#hhBook .bk-leaf.slide .bk-back{display:none}
+@media (max-width:700px){
+  #hhBook .bk-stage{margin:6px 34px 8px}
+  #hhBook .bk-nav{width:28px;height:36px;margin-top:-18px}
+  #hhBook .bk-bar{gap:8px;font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){#hhBook{transition:none}}
+#hhBook .bk-msg[hidden]{display:none}
+
+/* ---------- design document page (scrolls in an overlay over the game) ---------- */
+#hhSite{position:absolute;left:var(--bl,8%);right:var(--bl,8%);top:calc(var(--beam,60px) - 2px);bottom:0;z-index:9;display:flex;flex-direction:column;outline:none;
+        background:radial-gradient(120% 90% at 50% 40%,rgba(30,16,70,.94),rgba(6,4,18,.97));opacity:0;transition:opacity .25s ease}
+#hhSite[hidden]{display:none}
+#hhSite.shown{opacity:1}
+#hhSite .bk-bar{display:flex;align-items:center;gap:12px;padding:8px 10px 0 14px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#9ff3ff;text-shadow:0 0 6px rgba(80,220,255,.7)}
+#hhSite .bk-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#hhSite .st-ext{color:#c9bfff;text-shadow:none;text-decoration:none;white-space:nowrap}
+#hhSite .st-ext:hover,#hhSite .st-ext:focus-visible{color:#fff;outline:none;text-decoration:underline}
+#hhSite .bk-close{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(201,191,255,.6);background:rgba(20,10,50,.8);color:#e8e2ff;font:400 20px/1 system-ui,sans-serif;cursor:pointer;padding:0}
+#hhSite .bk-close:hover,#hhSite .bk-close:focus-visible{background:rgba(90,50,200,.8);outline:none}
+#hhSite .st-frame{position:relative;flex:1;min-height:0;margin:8px 12px 12px;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px rgba(201,191,255,.35),0 14px 34px rgba(0,0,0,.55)}
+#hhSite iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;background:#fff;transform-origin:0 0}
+#hhSite .bk-msg{position:absolute;inset:0;display:grid;place-items:center;color:#5a4a9a;font:600 13px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.05em;pointer-events:none}
+#hhSite .bk-msg[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#hhSite{transition:none}}
+/* the same page over the whole stage, for the doc-only cassettes (js/book.js) */
+#docPane{position:absolute;inset:clamp(8px,4vh,36px) clamp(8px,5vw,64px);z-index:61;border-radius:10px;box-shadow:0 0 0 1px rgba(201,191,255,.35),0 24px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;outline:none;
+        background:radial-gradient(120% 90% at 50% 40%,rgba(30,16,70,.94),rgba(6,4,18,.97));opacity:0;transition:opacity .25s ease}
+#docPane[hidden]{display:none}
+#docPane.shown{opacity:1}
+#docPane .bk-bar{display:flex;align-items:center;gap:12px;padding:8px 10px 0 14px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:#9ff3ff;text-shadow:0 0 6px rgba(80,220,255,.7)}
+#docPane .bk-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+#docPane .st-ext{color:#c9bfff;text-shadow:none;text-decoration:none;white-space:nowrap}
+#docPane .st-ext:hover,#docPane .st-ext:focus-visible{color:#fff;outline:none;text-decoration:underline}
+#docPane .bk-close{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(201,191,255,.6);background:rgba(20,10,50,.8);color:#e8e2ff;font:400 20px/1 system-ui,sans-serif;cursor:pointer;padding:0}
+#docPane .bk-close:hover,#docPane .bk-close:focus-visible{background:rgba(90,50,200,.8);outline:none}
+#docPane .st-frame{position:relative;flex:1;min-height:0;margin:8px 12px 12px;border-radius:6px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px rgba(201,191,255,.35),0 14px 34px rgba(0,0,0,.55)}
+#docPane iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;background:#fff;transform-origin:0 0}
+#docPane .bk-msg{position:absolute;inset:0;display:grid;place-items:center;color:#5a4a9a;font:600 13px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.05em;pointer-events:none}
+#docPane .bk-msg[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#docPane{transition:none}}
+
+/* ---------- floor text: 3D letters standing on the monitor's ground plane (letters rise, then "with AI" slides in) ---------- */
+#floorText{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;clip-path:polygon(578px 488px,982px 502px,982px 760px,578px 772px)}
+#floorText .fsl,#floorText .fll,#floorText .fg{position:absolute;left:0;top:0}
+#floorText .fw{position:absolute;left:0;top:0;transform-origin:0 0;white-space:pre;font:900 100px/1.05 "Arial Rounded MT Bold","Avenir Next","Trebuchet MS",system-ui,sans-serif;-webkit-text-stroke:5px currentColor}
+#floorText .ch{display:inline-block;transform-origin:0 var(--base,80px)}
+#floorText .fsh{color:#05010f;-webkit-text-stroke:5px #05010f;filter:blur(2.5px);-webkit-mask-image:linear-gradient(to top,#000 35%,transparent 100%);mask-image:linear-gradient(to top,#000 35%,transparent 100%)}
+#floorText .ffront{text-shadow:0 -5px 0 rgba(255,255,255,.55)}
+
+/* ---------- art gallery (after the project worlds): a pinned 3D corridor the ninja walks into with the scroll ---------- */
+#gallery{position:relative;z-index:1;height:1000vh;background:#0b0222}
+.gal-pin{position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;background:radial-gradient(70% 60% at 50% 42%,#2a0f6e,#0b0222 75%)}
+.gal-cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.gal-cv.over-art{cursor:zoom-in}
+.gal-list{position:absolute;left:0;top:0;margin:0;padding:0;list-style:none}
+.gal-list button{position:absolute;width:1px;height:1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.gal-list button:focus{position:fixed;left:16px;top:auto;bottom:16px;width:auto;height:auto;overflow:visible;clip:auto;z-index:5;padding:8px 14px;border:2px solid #3de0ff;border-radius:8px;background:#1b0d4f;color:#fff;font:700 13px ui-monospace,Menlo,monospace}
+/* the ninja (screen space, over the corridor) */
+#galNinja{z-index:3;display:none}
+.gal-shadow{position:absolute;left:0;top:0;width:200px;height:44px;margin:-22px 0 0 -100px;border-radius:50%;z-index:2;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,rgba(3,0,12,.7),rgba(3,0,12,.35) 55%,transparent)}
+.gal-hud{position:absolute;inset:0;padding:clamp(14px,3vh,30px) clamp(14px,3vw,34px);z-index:4;pointer-events:none}
+.gal-hud-title{margin:0;font:800 clamp(16px,2.2vw,24px)/1 "Quicksand","Avenir Next",system-ui,sans-serif;letter-spacing:.2em;color:#fff;
+  text-shadow:0 0 4px #fff,0 0 12px #ff4be0,0 0 28px #ff4be0}
+.gal-hud-count{margin:8px 0 0;font:700 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#9ff3ff;text-shadow:0 0 8px rgba(80,220,255,.6)}
+.gal-hud-title{transition:opacity .4s}
+.gal-hud-hint{position:absolute;left:0;right:0;bottom:clamp(18px,4vh,40px);text-align:center;margin:0;font:700 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#cfc8ff;transition:opacity .4s}
+/* viewer */
+html.gal-open,html.doc-open,html.contact-open{overflow:hidden}
+#galBox{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;background:rgba(6,2,22,.93);backdrop-filter:blur(4px);opacity:0;transition:opacity .22s}
+#galBox[hidden]{display:none}
+#galBox.on{opacity:1}
+.gb-fig{margin:0;display:flex;flex-direction:column;align-items:center;gap:14px}
+.gb-img{display:block;max-width:min(88vw,1500px);max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px);width:auto;height:auto;object-fit:contain;
+  border:clamp(6px,1vw,12px) solid #1b0d4f;border-radius:4px;box-shadow:0 0 0 2px var(--neon,#ff4be0),0 0 46px color-mix(in srgb,var(--neon,#ff4be0) 55%,transparent)}
+.gb-cap{font:700 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#9ff3ff;text-shadow:0 0 8px rgba(80,220,255,.6)}
+.gb-btn,.gb-close{position:absolute;border:1.5px solid rgba(201,191,255,.6);background:rgba(20,10,50,.8);color:#e8e2ff;cursor:pointer;padding:0}
+.gb-btn{top:50%;width:44px;height:54px;margin-top:-27px;border-radius:12px;font-size:16px}
+.gb-prev{left:clamp(6px,2vw,28px)}.gb-next{right:clamp(6px,2vw,28px)}
+.gb-close{top:16px;right:16px;width:42px;height:42px;border-radius:50%;font:400 26px/1 system-ui,sans-serif}
+.gb-btn:hover,.gb-btn:focus-visible,.gb-close:hover,.gb-close:focus-visible{background:rgba(90,50,200,.85);outline:none}
+@media (prefers-reduced-motion:reduce){.gal-sign-b{animation:none}.art-frame,#galBox{transition:none}}
+
+/* ---------- quick navigation (right edge) ---------- */
+#qnav{position:fixed;right:clamp(6px,1.4vw,20px);top:50%;transform:translateY(-50%);z-index:45;display:flex;flex-direction:column;align-items:flex-end;gap:clamp(20px,5vh,44px);padding:6px 0}
+#qnav::before{content:"";position:absolute;right:5px;top:16px;bottom:16px;width:2px;border-radius:2px;background:linear-gradient(180deg,rgba(255,75,224,.5),rgba(61,224,255,.5));opacity:.55}
+.qn{position:relative;display:flex;align-items:center;gap:10px;padding:2px 0;border:0;background:none;cursor:pointer;color:#c9bfff;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;outline:none;-webkit-tap-highlight-color:transparent}
+.qn b{padding:8px 12px;border-radius:999px;font-weight:700;background:rgba(14,6,40,.74);border:1px solid rgba(201,191,255,.35);backdrop-filter:blur(4px);transition:color .2s,border-color .2s,box-shadow .2s}
+.qn s{flex:none;width:12px;height:12px;border-radius:50%;border:2px solid #c9bfff;background:#12052b;transition:background .2s,border-color .2s,box-shadow .2s}
+.qn:hover b,.qn:focus-visible b{color:#fff;border-color:#3de0ff;box-shadow:0 0 12px rgba(61,224,255,.5)}
+.qn:hover s,.qn:focus-visible s{border-color:#3de0ff}
+.qn.on b{color:#fff;border-color:#ff4be0;box-shadow:0 0 12px rgba(255,75,224,.55)}
+.qn.on s{background:#ff4be0;border-color:#ff9cf0;box-shadow:0 0 10px #ff4be0}
+#qnFade{position:fixed;inset:0;z-index:44;background:#0a0420;opacity:0;pointer-events:none;transition:opacity .17s ease}
+#qnFade.on{opacity:1;pointer-events:auto}
+html.doc-open #qnav,html.gal-open #qnav,html.contact-open #qnav,body:has(#hhStage.playing) #qnav{opacity:0;pointer-events:none}
+#qnav{transition:opacity .2s}
+@media (max-width:640px){
+  .qn{font-size:9px;gap:6px}
+  .qn b{padding:6px 8px}
+}
+@media (prefers-reduced-motion:reduce){#qnFade{transition:none}}
+
+/* ---------- resume viewer: the doc pane in "pdf" mode shows the PDF pages itself (pdf.js), so it scrolls on phones too ---------- */
+#docPane .st-pdf{display:none;position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;background:#2a2540;padding:14px 0}
+#docPane.pdf-mode iframe{display:none}
+#docPane.pdf-mode .st-pdf{display:block}
+#docPane .st-pdf canvas{display:block;margin:0 auto 14px;max-width:calc(100% - 20px);height:auto;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+
+/* ---------- contact panel (Contact button in the quick nav): neon tiles on a tiled backdrop ---------- */
+#contactBox{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;padding:16px;background:rgba(6,2,22,.72);backdrop-filter:blur(5px);opacity:0;transition:opacity .22s}
+#contactBox[hidden]{display:none}
+#contactBox.shown{opacity:1}
+.ct-panel{position:relative;width:min(860px,100%);max-height:100%;overflow:auto;padding:clamp(22px,4vw,40px);border-radius:18px;text-align:center;color:#fff;
+      font-family:"Quicksand","Avenir Next","Trebuchet MS",system-ui,sans-serif;border:2px solid rgba(201,191,255,.35);
+      background:linear-gradient(rgba(120,90,255,.10) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(120,90,255,.10) 1px,transparent 1px) 0 0/44px 44px,
+                 radial-gradient(120% 90% at 50% 0%,#2a1680,#12052b 70%);
+      box-shadow:0 0 0 1px #12052b,0 0 40px rgba(255,75,224,.35),0 24px 60px rgba(0,0,0,.6);transform:translateY(10px) scale(.98);transition:transform .22s}
+#contactBox.shown .ct-panel{transform:none}
+.ct-panel h2{margin:0;font:800 clamp(26px,4.4vw,40px)/1 "Avenir Next","Segoe UI",system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#fff;text-shadow:0 0 14px #ff4be0,0 0 30px rgba(255,75,224,.6)}
+.ct-sub{margin:10px 0 clamp(18px,3vw,30px);font:700 12px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#9ff3ff;text-shadow:0 0 8px rgba(80,220,255,.7)}
+.ct-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,2vw,20px)}
+.ct-tile{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;padding:22px 14px 18px;border-radius:14px;cursor:pointer;text-decoration:none;color:#fff;font:inherit;
+      background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),#160944;border:2px solid color-mix(in srgb,var(--tc) 55%,#12052b);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 18px color-mix(in srgb,var(--tc) 30%,transparent);transition:transform .18s,box-shadow .18s,border-color .18s;outline:none;-webkit-tap-highlight-color:transparent}
+.ct-tile:hover,.ct-tile:focus-visible{transform:translateY(-3px);border-color:var(--tc);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 28px color-mix(in srgb,var(--tc) 60%,transparent)}
+.ct-tile svg{width:38px;height:38px;fill:none;stroke:var(--tc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--tc))}
+.ct-k{font:800 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--tc)}
+.ct-v{max-width:100%;font-size:clamp(14px,1.7vw,17px);font-weight:700}   /* the email may only break after the @ (<wbr>) */
+.ct-h{font:600 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.05em;color:#c9bfff}
+.ct-tile.copied .ct-h{color:#9dffcf}
+.ct-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(201,191,255,.6);background:rgba(20,10,50,.8);color:#e8e2ff;font:400 22px/1 system-ui,sans-serif;cursor:pointer;padding:0}
+.ct-close:hover,.ct-close:focus-visible{background:rgba(90,50,200,.8);outline:none}
+@media (max-width:640px){.ct-tiles{grid-template-columns:1fr}.ct-tile{padding:14px 12px;gap:5px}.ct-tile svg{width:28px;height:28px}}
+@media (prefers-reduced-motion:reduce){#contactBox,.ct-panel{transition:none}}

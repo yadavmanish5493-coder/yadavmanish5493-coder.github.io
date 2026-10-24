@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Navarasa Saint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script>/* embedded in the portfolio's handheld: ?embed (the light mood skies, UI clear of the pillars and the parked cassette),
+   &bg (attract view only: the saint, no UI), &inset=<px> (pillar inner edge from the bay edge) */
+(() => { const Q = new URLSearchParams(location.search), h = document.documentElement;
+  if (Q.has('embed')) { h.classList.add('embed'); h.dataset.theme = 'light'; } if (Q.has('bg')) h.classList.add('bgonly');
+  h.style.setProperty('--ix', (parseFloat(Q.get('inset')) || 0) + 'px'); })();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Mukta:wght@400;600&display=swap">
+<style>
+  /* Layout: full-bleed sky; title and tally on top, the saint's rig in the middle, nine rasa chips along the bottom. */
+  :root {
+    --ink: #2A2140;
+    --muted: #6B6283;
+    --saffron: #D9650F;
+    --glass: rgba(255, 255, 255, 0.6);
+    --line: rgba(42, 33, 64, 0.16);
+    --night: #15111F;
+    --mix: 100%;
+    --mood: #D9650F;
+    --display: "Baloo 2", "Kohinoor Devanagari", "Noto Sans Devanagari", system-ui, sans-serif;
+    --body: "Mukta", "Kohinoor Devanagari", "Noto Sans Devanagari", system-ui, sans-serif;
+    --sky-a: #E6E0F5;
+    --sky-b: #FBF4E8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #F2ECFF; --muted: #B5ACCB; --saffron: #FF9A4D;
+      --glass: rgba(30, 24, 46, 0.64); --line: rgba(242, 236, 255, 0.18);
+      --mix: 30%; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #F2ECFF; --muted: #B5ACCB; --saffron: #FF9A4D;
+    --glass: rgba(30, 24, 46, 0.64); --line: rgba(242, 236, 255, 0.18);
+    --mix: 30%; color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  body {
+    background: var(--night);
+    color: var(--ink);
+    font-family: var(--body);
+    overflow: hidden;
+  }
+  .stage {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--sky-a) var(--mix), var(--night)),
+      color-mix(in oklab, var(--sky-b) var(--mix), var(--night)));
+  }
+  .ui {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 14px;
+  }
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: grid; line-height: 1; }
+  .brand .deva { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--saffron); letter-spacing: 0.02em; }
+  .brand h1 { margin: 2px 0 0; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 4vw, 30px); letter-spacing: -0.01em; }
+  .tally {
+    margin: 0; padding: 6px 12px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--line);
+    font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+
+  .mood {
+    align-self: center; text-align: center; margin-top: 6px;
+    display: grid; gap: 0; line-height: 1;
+  }
+  .mood .deva { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 7vw, 52px); color: var(--mood); }
+  .mood .name { margin-top: 6px; font-size: 16px; font-weight: 600; letter-spacing: 0.04em; }
+  .mood .name span { color: var(--muted); font-weight: 400; }
+  .mood.swap { animation: moodIn 520ms cubic-bezier(.2, .9, .3, 1.3); }
+  @keyframes moodIn { from { transform: translateY(-8px) scale(0.92); opacity: 0.2; } to { transform: none; opacity: 1; } }
+
+  /* The stage button: a focusable region that holds the SVG rig */
+  .scene {
+    flex: 1; min-height: 0; position: relative; outline: none; border-radius: 18px;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .scene:focus-visible { box-shadow: 0 0 0 3px var(--saffron); }
+  .scene svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  #cloud, #saint, #cloudFront { cursor: pointer; }
+  .skin { fill: var(--skin); }
+  .skinS { fill: var(--skinShade); }
+
+  .hint {
+    align-self: center; margin: 0 0 10px; padding: 6px 14px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--line); font-size: 15px; font-weight: 600;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    animation: nudge 2.4s ease-in-out infinite;
+  }
+  @keyframes nudge { 50% { transform: translateY(-4px); } }
+  .toastSlot { position: relative; height: 0; display: flex; justify-content: center; }
+  .toast {
+    position: absolute; bottom: 8px; margin: 0; padding: 8px 16px; border-radius: 999px; white-space: nowrap;
+    background: var(--saffron); color: #fff; font-weight: 600; font-size: 15px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); animation: moodIn 520ms cubic-bezier(.2, .9, .3, 1.3);
+  }
+
+  .rasas { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 960px; width: 100%; align-self: center; }
+  .chip {
+    appearance: none; border: 1px solid var(--line); background: var(--glass); color: var(--ink);
+    border-radius: 14px; padding: 8px 4px 7px; min-width: 0; min-height: 46px;
+    flex: 1 1 0; max-width: 104px;
+    display: grid; justify-items: center; align-content: center; gap: 2px;
+    font: inherit; cursor: pointer;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    transition: transform 160ms ease, border-color 200ms ease;
+  }
+  .chip:hover:not(:disabled) { transform: translateY(-2px); }
+  .chip:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in oklab, var(--c) 25%, transparent); }
+  .chip .d { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1.1; }
+  .chip .e { font-size: 12px; color: var(--muted); line-height: 1; }
+  .chip:disabled { cursor: default; border-style: dashed; }
+  .chip:disabled .dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+  .chip:disabled .d, .chip:disabled .e { color: var(--muted); opacity: 0.7; }
+  .chip[aria-pressed="true"] { border-color: var(--c); box-shadow: 0 0 0 1px var(--c); }
+  .chip.new { animation: found 700ms cubic-bezier(.2, .9, .3, 1.4); }
+  @keyframes found { 0% { transform: scale(0.7); } 60% { transform: scale(1.12); } 100% { transform: none; } }
+
+  @media (max-width: 600px) {
+    .rasas { gap: 5px; }
+    .chip { flex: 0 0 calc((100% - 20px) / 5); max-width: none; }
+    .chip .e { display: none; }
+  }
+  @media (max-height: 520px) {
+    .hint { display: none; }
+    .mood { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: 62px; text-align: left; align-self: auto; }
+    .mood .deva { font-size: 30px; }
+    .mood .name { font-size: 14px; }
+    .chip { min-height: 38px; padding: 5px 2px; }
+    .chip .e, .chip .dot { display: none; }
+    .rasas { flex-wrap: nowrap; }
+    .chip { flex: 1 1 0; max-width: 104px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hint, .mood.swap, .chip.new, .toast { animation: none; }
+  }
+  /* embedded in the portfolio (see the head script) */
+  html.embed .ui { padding-left: calc(var(--ix, 0px) + 18px); padding-right: calc(var(--ix, 0px) + 18px); padding-top: 92px; }
+  html.bgonly body, html.bgonly .stage { background: transparent; }   /* attract view: the handheld's Navarasa world shows behind the saint */
+  html.bgonly .top, html.bgonly .mood, html.bgonly .hint, html.bgonly .toastSlot, html.bgonly .rasas { visibility: hidden; }
+</style>
+
+<main class="stage" id="stage">
+  <div class="ui">
+    <header class="top">
+      <div class="brand"><span class="deva">नवरस</span><h1>Navarasa Saint</h1></div>
+      <p class="tally" id="tally">0 of 9 rasas found</p>
+    </header>
+    <div class="mood" id="mood" aria-live="polite">
+      <span class="deva" id="moodDeva">ध्यान</span>
+      <span class="name"><b id="moodRasa">Dhyana</b> <span id="moodEng">· Meditation</span></span>
+    </div>
+
+    <div class="scene" id="sceneBox" tabindex="0" role="button"
+         aria-label="The saint meditating on his cloud. Tap, or press Enter or Space, to change his mood.">
+<svg id="scene" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <defs>
+    <linearGradient id="gCloud" gradientUnits="userSpaceOnUse" x1="0" y1="340" x2="0" y2="442">
+      <stop id="gc0" offset="0" stop-color="#fff"/><stop id="gc1" offset=".5" stop-color="#eee"/><stop id="gc2" offset="1" stop-color="#ccc"/>
+    </linearGradient>
+    <radialGradient id="gCheek"><stop offset="0" stop-color="#EE5577" stop-opacity=".85"/><stop offset="1" stop-color="#EE5577" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gFace" cx=".38" cy=".3" r=".85">
+      <stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#7A3A1A" stop-opacity=".26"/>
+    </radialGradient>
+    <linearGradient id="gTorso" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#5A2A10" stop-opacity=".22"/></linearGradient>
+    <linearGradient id="gRobe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFA640"/><stop offset=".6" stop-color="#F0802A"/><stop offset="1" stop-color="#D96A18"/></linearGradient>
+    <linearGradient id="gDhoti" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F58C2C"/><stop offset="1" stop-color="#D4691A"/></linearGradient>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#D9971A"/></linearGradient>
+    <radialGradient id="gSunset"><stop offset="0" stop-color="#FFF0B0"/><stop offset=".55" stop-color="#FFB98A"/><stop offset="1" stop-color="#FF8DB0"/></radialGradient>
+    <radialGradient id="gSunGlow"><stop offset=".35" stop-color="#FFC39A" stop-opacity=".75"/><stop offset="1" stop-color="#FF9DB8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gHaloGlow"><stop offset=".25" stop-color="#FFE9A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFE9A0" stop-opacity="0"/></radialGradient>
+    <clipPath id="cpEye"><ellipse rx="15.5" ry="12.5"/></clipPath>
+    <clipPath id="cpLid"><ellipse rx="19.5" ry="16"/></clipPath>
+    <clipPath id="cpMouth"><path id="mouthClip" d=""/></clipPath>
+    <path id="heart" d="M0,6 C-11,-3 -11,-12 -4,-13 C-1,-13 0,-10 0,-9 C0,-10 1,-13 4,-13 C11,-12 11,-3 0,6Z"/>
+    <path id="spark" d="M0,-11 Q1.6,-1.6 11,0 Q1.6,1.6 0,11 Q-1.6,1.6 -11,0 Q-1.6,-1.6 0,-11Z"/>
+  </defs>
+
+  <!-- mood effects, behind everything -->
+  <g id="fxBack" pointer-events="none">
+    <g id="sunsetFx"><circle cx="200" cy="250" r="165" fill="url(#gSunGlow)"/><circle cx="200" cy="250" r="96" fill="url(#gSunset)" stroke="#2A1B2E" stroke-width="3"/></g>
+    <g id="haloFx"><circle cx="200" cy="150" r="150" fill="url(#gHaloGlow)"/><g id="haloRings" fill="none" stroke="#F2C23C" stroke-linecap="round"></g></g>
+    <g id="powerFx"><g id="powerRays"></g></g>
+    <g id="sunFx"><g transform="translate(46 50)"><g id="sunRays"></g><circle r="22" fill="#FFD23F" stroke="#2A1B2E" stroke-width="3"/><circle cx="-6" cy="-7" r="6" fill="#FFF3A8" opacity=".8"/></g>
+      <g id="rainbow" fill="none" stroke-width="8"></g></g>
+    <g id="windFx" fill="none" stroke="#7B84AA" stroke-width="3.6" stroke-linecap="round"></g>
+    <g id="smokeFx"></g>
+    <g id="boltFx"></g>
+    <g id="rainFx"></g>
+  </g>
+
+  <ellipse id="shadow" cx="200" cy="494" rx="98" ry="10" fill="#28184A" opacity=".28" pointer-events="none"/>
+
+  <g id="squash"><g id="float"><g id="rig">
+
+    <!-- CLOUD -->
+    <g id="cloud">
+      <g id="cloudArms"></g>
+      <g id="cloudBack"></g>
+    </g>
+
+    <!-- SAINT -->
+    <g id="saint">
+      <g id="body">
+        <path id="neck" class="skinS" d="M183,196 L183,224 C190,231 210,231 217,224 L217,196Z" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+        <path id="torso" class="skin" d="M148,226 C138,238 137,266 145,304 L255,304 C263,266 262,238 252,226 C234,214 166,214 148,226Z" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M148,226 C138,238 137,266 145,304 L255,304 C263,266 262,238 252,226 C234,214 166,214 148,226Z" fill="url(#gTorso)"/>
+        <path d="M196,236 C198,252 197,266 199,280" stroke="#B87848" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <path id="legs" d="M148,292 C128,298 100,316 92,338 C88,352 99,362 120,362 L280,362 C301,362 312,352 308,338 C300,316 272,298 252,292 C230,300 170,300 148,292Z" fill="url(#gDhoti)" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+        <g fill="none" stroke="#A8520E" stroke-width="2.4" stroke-linecap="round" opacity=".75">
+          <path d="M106,344 C140,326 178,332 204,352"/><path d="M296,344 C262,326 224,332 198,352"/>
+          <path d="M150,300 C160,314 150,328 138,336"/><path d="M250,300 C240,314 250,328 262,336"/>
+        </g>
+        <g fill="none" stroke="#FFC070" stroke-width="2.6" stroke-linecap="round" opacity=".7"><path d="M104,332 C112,320 124,312 138,308"/><path d="M296,332 C288,320 276,312 262,308"/></g>
+        <ellipse cx="170" cy="347" rx="19" ry="8.5" class="skin" stroke="#2A1B2E" stroke-width="2.6"/>
+        <ellipse cx="230" cy="347" rx="19" ry="8.5" class="skin" stroke="#2A1B2E" stroke-width="2.6"/>
+        <path d="M160,346 q3,3 7,0 M170,349 q3,3 7,0 M223,349 q3,3 7,0 M233,346 q3,3 7,0" stroke="#8B5430" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <!-- robe: saffron cloth across the chest from the left shoulder -->
+        <path id="robe" d="M203,216 L246,222 C262,230 268,246 266,264 L262,306 L148,306 C168,280 190,246 203,216Z" fill="url(#gRobe)" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+        <g fill="none" stroke="#B85A0A" stroke-width="2.4" stroke-linecap="round" opacity=".7">
+          <path d="M216,232 C226,256 232,282 232,304"/><path d="M236,234 C244,258 248,282 248,304"/><path d="M202,262 C200,278 196,292 190,304"/>
+        </g>
+        <path d="M203,216 C190,246 168,280 148,306" fill="none" stroke="#FFD08A" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+      </g>
+      <g id="arms"></g>
+      <path id="shoulderCap" d="M214,214 C238,213 262,219 271,238 C273,249 265,256 255,251 C247,244 232,238 214,236Z" fill="url(#gRobe)" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+      <g id="garland"></g>
+
+      <!-- HEAD -->
+      <g id="head">
+        <g id="ears" stroke="#2A1B2E" stroke-width="2.6">
+          <ellipse cx="147" cy="142" rx="8" ry="13" class="skinS"/><ellipse cx="253" cy="142" rx="8" ry="13" class="skinS"/>
+        </g>
+        <path id="face" class="skin" d="M200,76 C235,76 254,104 254,138 C254,176 232,204 200,204 C168,204 146,176 146,138 C146,104 165,76 200,76Z" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M200,76 C235,76 254,104 254,138 C254,176 232,204 200,204 C168,204 146,176 146,138 C146,104 165,76 200,76Z" fill="url(#gFace)"/>
+        <g id="cheeks"><ellipse id="cheekL" cx="160" cy="153" rx="17" ry="12" fill="url(#gCheek)"/><ellipse id="cheekR" cx="240" cy="153" rx="17" ry="12" fill="url(#gCheek)"/></g>
+        <g id="nose">
+          <path d="M206,120 C209,134 210,146 208,154" fill="none" stroke="#9A5E36" stroke-width="2.6" stroke-linecap="round" opacity=".4"/>
+          <path d="M193,143 C189,152 188,160 192,165 C196,170 206,170 210,165 C213,160 211,152 207,143" class="skin" stroke="#2A1B2E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <ellipse cx="197" cy="154" rx="3.4" ry="5" fill="#fff" opacity=".22"/>
+          <path d="M194,166 q2,2 4,0 M203,166 q2,2 4,0" fill="none" stroke="#2A1B2E" stroke-width="1.8" stroke-linecap="round"/>
+        </g>
+        <g id="eyeL"></g><g id="eyeR"></g>
+        <g id="browL"><path id="browLp" fill="#1E1517" stroke="#1E1517" stroke-width="1.6" stroke-linejoin="round"/></g>
+        <g id="browR"><path id="browRp" fill="#1E1517" stroke="#1E1517" stroke-width="1.6" stroke-linejoin="round"/></g>
+        <!-- beard: grey, joined to the sideburns, with the mouth patch left bare -->
+        <g id="beard">
+          <path d="M143,112 C139,160 156,214 200,229 C244,214 261,160 257,112 L251,112 C252,142 247,160 235,168 C222,173 178,173 165,168 C153,160 148,142 149,112Z" fill="#BDB8B6" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+          <g fill="none" stroke-linecap="round" stroke-width="2">
+            <path d="M156,176 q-2,14 4,26 M165,190 q0,14 8,24 M176,204 q4,10 12,16 M244,176 q2,14 -4,26 M235,190 q0,14 -8,24 M224,204 q-4,10 -12,16" stroke="#7E7876"/>
+            <path d="M152,150 q-1,10 2,18 M248,150 q1,10 -2,18 M170,180 q-2,10 1,20 M230,180 q2,10 -1,20 M200,214 q0,6 0,10" stroke="#E8E5E2"/>
+            <path d="M160,160 q1,6 -1,12 M240,160 q-1,6 1,12 M186,214 q2,6 6,9 M214,214 q-2,6 -6,9" stroke="#5E5856"/>
+          </g>
+        </g>
+        <ellipse id="mouthPatch" cx="200" cy="196" rx="25" ry="12" class="skin" stroke="#A9825C" stroke-opacity=".45" stroke-width="1.6"/>
+        <g id="mouth" transform="translate(200 194)">
+          <path id="mouthFill" fill="#6B1F2A"/>
+          <g clip-path="url(#cpMouth)">
+            <rect id="teeth" x="-40" y="-8" width="80" height="0" fill="#FFFDF6"/>
+            <g id="gritLines" stroke="#B9B0A4" stroke-width="1.6" opacity="0"><path d="M-12,-30V40M-6,-30V40M0,-30V40M6,-30V40M12,-30V40"/><path d="M-30,3H30"/></g>
+            <ellipse id="tongueIn" cx="0" cy="12" rx="10" ry="6.5" fill="#E8707E" opacity="0"/>
+          </g>
+          <path id="mouthLine" fill="none" stroke="#2A1420" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/>
+          <g id="tongueOut"><path d="M-8.5,-2 L-8.5,9 Q-8.5,21 0,21 Q8.5,21 8.5,9 L8.5,-2Z" fill="#EE7A88" stroke="#2A1420" stroke-width="2.4" stroke-linejoin="round"/><path d="M0,3 V13" stroke="#B94A5C" stroke-width="2" stroke-linecap="round"/></g>
+        </g>
+        <g id="moustache">
+          <path d="M200,167 C192,163 176,160 164,165 C150,171 141,186 143,199 C149,195 156,189 162,185 C172,181 186,185 200,185 C214,185 228,181 238,185 C244,189 251,195 257,199 C259,186 250,171 236,165 C224,160 208,163 200,167Z" fill="#A5A09E" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+          <g fill="none" stroke-linecap="round" stroke-width="2">
+            <path d="M196,170 C186,168 174,168 166,172 M204,170 C214,168 226,168 234,172" stroke="#E6E3E0"/>
+            <path d="M190,176 C176,176 162,182 154,194 M210,176 C224,176 238,182 246,194" stroke="#6C6664"/>
+            <path d="M172,180 C164,184 158,190 154,196 M228,180 C236,184 242,190 246,196" stroke="#E6E3E0"/>
+          </g>
+        </g>
+        <g id="hair">
+          <path d="M146,128 C138,98 158,64 200,63 C242,64 262,98 254,128 L249,128 C248,112 240,100 228,94 C216,88 184,88 172,94 C160,100 152,112 151,128Z" fill="#1C1620" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M162,84 C176,72 196,70 214,72 M222,76 C236,80 244,90 248,102" fill="none" stroke="#4A4052" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+        </g>
+        <g id="faceFx">
+          <g id="tearL" opacity="0"><path d="M170,142 C164,156 161,172 166,190" fill="none" stroke="#8FD0F7" stroke-width="3.6" stroke-linecap="round" opacity=".6"/></g>
+          <g id="tearR" opacity="0"><path d="M230,142 C236,156 239,172 234,190" fill="none" stroke="#8FD0F7" stroke-width="3.6" stroke-linecap="round" opacity=".6"/></g>
+          <g id="tearDrops"></g>
+          <path id="sweat" d="M0,-9 C5,-2 7,2 0,7 C-7,2 -5,-2 0,-9Z" fill="#A9DEF8" stroke="#2A1B2E" stroke-width="1.8" opacity="0"/>
+          <g id="vein" opacity="0" fill="none" stroke="#E0352B" stroke-width="3.6" stroke-linecap="round"><path d="M-10,-3 Q-3,-3 -3,-10 M10,-3 Q3,-3 3,-10 M-10,3 Q-3,3 -3,10 M10,3 Q3,3 3,10"/></g>
+        </g>
+        <g id="crown" opacity="0">
+          <path d="M163,82 L158,54 L180,68 L200,46 L220,68 L242,54 L237,82 Z" fill="url(#gGold)" stroke="#2A1B2E" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M163,76 Q200,86 237,76" fill="none" stroke="#B7770F" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="158" cy="54" r="3.8" fill="#fff" stroke="#2A1B2E" stroke-width="1.8"/><circle cx="200" cy="46" r="4" fill="#fff" stroke="#2A1B2E" stroke-width="1.8"/><circle cx="242" cy="54" r="3.8" fill="#fff" stroke="#2A1B2E" stroke-width="1.8"/>
+          <path d="M200,60 L208,68 L200,78 L192,68Z" fill="#D81E3A" stroke="#2A1B2E" stroke-width="2.2" stroke-linejoin="round"/><path d="M196,66 L200,63 L202,67Z" fill="#fff" opacity=".7"/>
+        </g>
+      </g>
+      <g id="cloudFront"></g>
+    </g>
+
+    <g id="orbs" pointer-events="none"></g>
+  </g></g></g>
+
+  <!-- mood effects, in front -->
+  <g id="fxFront" pointer-events="none">
+    <g id="sparkFx"></g>
+    <g id="leafFx"></g>
+    <g id="heartFx"></g>
+    <g id="puffFx"></g>
+    <g id="confettiFx"></g>
+  </g>
+</svg>
+    </div>
+
+    <p class="hint" id="hint">Tap the saint to change his mood</p>
+    <div class="toastSlot"><p class="toast" id="toast" role="status" hidden>All nine rasas found</p></div>
+    <nav class="rasas" id="rasas" aria-label="The nine rasas"></nav>
+  </div>
+</main>
+
+<script>
+(() => {
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const n2 = v => Math.round(v * 100) / 100;
+const reduceQ = matchMedia("(prefers-reduced-motion: reduce)");
+let reduce = reduceQ.matches;
+reduceQ.addEventListener?.("change", e => { reduce = e.matches; });
+
+// The nine rasas of Indian aesthetics (names, colours and rules shared with the 3D version)
+const MOODS = [
+  { id: "angry",   rasa: "Raudra",    deva: "रौद्र",   eng: "Anger",   color: "#D9493A" },
+  { id: "sad",     rasa: "Karuna",    deva: "करुण",   eng: "Sorrow",  color: "#3F7FC4" },
+  { id: "happy",   rasa: "Hasya",     deva: "हास्य",   eng: "Joy",     color: "#E5A10F" },
+  { id: "fear",    rasa: "Bhayanaka", deva: "भयानक",  eng: "Fear",    color: "#6E7C99" },
+  { id: "strong",  rasa: "Veera",     deva: "वीर",     eng: "Courage", color: "#E0700F" },
+  { id: "wonder",  rasa: "Adbhuta",   deva: "अद्भुत",  eng: "Wonder",  color: "#7E62D8" },
+  { id: "disgust", rasa: "Bibhatsa",  deva: "बीभत्स",  eng: "Disgust", color: "#7F8E45" },
+  { id: "love",    rasa: "Shringara", deva: "शृंगार",  eng: "Love",    color: "#D9467A" },
+  { id: "peace",   rasa: "Shanta",    deva: "शान्त",   eng: "Peace",   color: "#C49A1E" },
+];
+const IDLE = { id: "idle", rasa: "Dhyana", deva: "ध्यान", eng: "Meditation", color: "var(--saffron)" };
+const BY_ID = Object.fromEntries([IDLE, ...MOODS].map(m => [m.id, m]));
+const RETURN_TO_IDLE_MS = 6500;
+
+/* ---------------------------------------------------------------------------
+   MOODS AS DATA. BASE is the calm Dhyana face; each mood overrides a few numbers.
+   Brows: browY centre line, browTilt inner-end drop (negative = worried), browArch bow, browIn shift to nose.
+   Eyes (eye space, inner corner +x): ulM/ulB/ulT = upper lid middle / bow / tilt; llM/llB = lower lid.
+   Mouth: mw half-width, mcy corner height, muy/mly upper/lower edge control, mk roundness,
+          teeth / grit / tongueIn / tongueOut amounts.
+   Arms: a1/a2 upper arm and forearm angles. Effects: storm, rain, sun, wind, power, spark, smoke, love, halo, cArms.
+--------------------------------------------------------------------------- */
+const BASE = {
+  browY: 109, browTilt: 0, browArch: 3, browIn: 0, browThick: 5,
+  ulM: -9.5, ulB: 1.5, ulT: 0, llM: 15, llB: 0,
+  iris: 1, pupil: 1, catch: 1, gazeX: 0, gazeY: 0, blink: 1,
+  mw: 13, mcy: -2, muy: 5, mly: 7, mk: 0.5, teeth: 0, grit: 0, tongueIn: 0, tongueOut: 0, mouY: 0,
+  cheek: 0.4, cheekR: 1, skin: "#E3A976", tears: 0, sweat: 0, vein: 0,
+  headTilt: 0, headY: 0,
+  shake: 0, tremble: 0, bounce: 0, bob: 1, breath: 1,
+  a1: 80, a2: 158, bicep: 0,
+  crown: 0, garland: 0,
+  storm: 0, rain: 0, sun: 0, wind: 0, power: 0, spark: 0, smoke: 0, love: 0, halo: 0, cArms: 0,
+  cTop: "#FFFFFF", cMid: "#F1EEFB", cBot: "#CDC6E6",
+  sky0: "#E6E0F5", sky1: "#FBF4E8",
+};
+const PRESETS = {
+  idle: {},
+  angry: {
+    browY: 111, browTilt: 9.5, browArch: -1, browIn: 5, browThick: 6.5,
+    ulM: -3, ulB: 0, ulT: 6.5, llM: 10, iris: 0.92, pupil: 0.9, catch: 0.7,
+    mw: 19, mcy: -1, muy: -7, mly: 9, mk: 1.15, teeth: 1.8, grit: 1, mouY: 2,
+    cheek: 0.15, skin: "#E4705A", vein: 1, shake: 1, headY: 1, bob: 0.5,
+    cTop: "#7C7893", cMid: "#524E69", cBot: "#2F2B44", storm: 1,
+    sky0: "#B4B0C2", sky1: "#E4E0EA",
+  },
+  sad: {
+    browY: 108, browTilt: -9, browArch: 1, browIn: -1,
+    ulM: -4, ulB: 2, ulT: -6, llM: 12, iris: 1.05, pupil: 1.15, catch: 1.2, gazeY: 1.8,
+    mw: 13, mcy: 3, muy: -3.5, mly: -1.5, cheek: 0.2, tears: 1, headTilt: 4, headY: 3, bob: 0.7,
+    cTop: "#B6C4DA", cMid: "#8699B6", cBot: "#5D7294", rain: 1,
+    sky0: "#BCC7D8", sky1: "#E8ECF2",
+  },
+  happy: {
+    browY: 103, browTilt: -2, browArch: 4.5,
+    ulM: -2, ulB: 5, ulT: 0, llM: -3, llB: 5.5, blink: 0,
+    mw: 23, mcy: -5, muy: 2, mly: 26, mk: 0.55, teeth: 1, tongueIn: 1, mouY: -4,
+    cheek: 0.8, cheekR: 1.3, headTilt: -5, headY: -1, bounce: 1, bob: 1.3,
+    cTop: "#FFFFFF", cMid: "#FFFFFF", cBot: "#DCE8F8", sun: 1,
+    sky0: "#FFE2A3", sky1: "#FFF6E4",
+  },
+  fear: {
+    browY: 97, browTilt: -5, browArch: 6,
+    ulM: -17, ulT: -2, llM: 18, iris: 0.78, pupil: 0.55, catch: 0.6,
+    mw: 12, mcy: 4, muy: -9, mly: 24, mk: 1.3, tongueIn: 0.5, mouY: 3,
+    cheek: 0.05, skin: "#EBD2B4", sweat: 1, tremble: 1, headY: 2, bob: 0.5,
+    cTop: "#D0D0DA", cMid: "#A9A9BA", cBot: "#7F7F95", wind: 1,
+    sky0: "#CAC7DC", sky1: "#ECE9F2",
+  },
+  strong: {
+    browY: 110, browTilt: 7, browArch: 0, browIn: 3, browThick: 6.5,
+    ulM: -6, ulT: 4, llM: 13,
+    mw: 21, mcy: -3, muy: 1, mly: 19, mk: 0.6, teeth: 1, tongueIn: 0.4, mouY: -2,
+    cheek: 0.55, headY: -1, bob: 0.7, a1: -8, a2: -99, bicep: 1,
+    cTop: "#D3D3DC", cMid: "#B0B0BF", cBot: "#868699", power: 1, cArms: 1,
+    sky0: "#FFD98E", sky1: "#FBF2E0",
+  },
+  wonder: {
+    browY: 98, browTilt: -1, browArch: 6,
+    ulM: -17, ulT: -1, llM: 17, iris: 1.1, pupil: 1.5, catch: 1.4, gazeY: -1.8,
+    mw: 16, mcy: -4, muy: 3, mly: 21, mk: 0.65, teeth: 0.6, tongueIn: 0.7, mouY: -2,
+    cheek: 0.5, headTilt: 2, bob: 1.2,
+    cTop: "#EADFFF", cMid: "#CBB9F6", cBot: "#9E88DA", spark: 1,
+    sky0: "#D2C8FA", sky1: "#F1EDFD",
+  },
+  disgust: {
+    browY: 111, browTilt: 7, browArch: -2.5, browIn: 7, browThick: 6.5,
+    ulM: 1, ulB: 2.5, ulT: 4, llM: 5, llB: 2.5, iris: 0.85, pupil: 0.8,
+    mw: 15, mcy: 4, muy: 1, mly: 11, tongueOut: 1, mouY: -3,
+    cheek: 0.1, skin: "#C9BF7C", headTilt: -6, headY: 1, bob: 0.8,
+    cTop: "#A89F92", cMid: "#8A8073", cBot: "#625A50", smoke: 1,
+    sky0: "#CFCCC2", sky1: "#EDEBE5",
+  },
+  love: {
+    browY: 105, browTilt: -3, browArch: 4,
+    ulM: -8, ulB: 1.5, ulT: -2, llM: 14, iris: 1.2, pupil: 1.6, catch: 1.7,
+    mw: 15, mcy: -4, muy: 7, mly: 12, mouY: -1,
+    cheek: 1, cheekR: 1.35, crown: 1, garland: 1, love: 1, headTilt: 5, bob: 1.1,
+    cTop: "#FFE3C6", cMid: "#FFBDB2", cBot: "#FF94B0",
+    sky0: "#FFCAD8", sky1: "#FFEFE4",
+  },
+  peace: {
+    browY: 107, browTilt: -2, browArch: 3.5,
+    ulM: 4, ulB: -4.5, llM: 3.5, llB: -4.5, blink: 0,
+    mw: 15, mcy: -3, muy: 6, mly: 8, cheek: 0.5, halo: 1, bob: 0.8, breath: 0.8,
+    cTop: "#FFFFFF", cMid: "#FBF8F0", cBot: "#E6DFD0",
+    sky0: "#FFEFC2", sky1: "#FBF8EE",
+  },
+};
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const COLOR_KEYS = ["skin", "cTop", "cMid", "cBot", "sky0", "sky1"];
+const PRE = {};
+for (const id in PRESETS) {
+  const o = { ...BASE, ...PRESETS[id] };
+  for (const k of COLOR_KEYS) o[k] = hex(o[k]);
+  PRE[id] = o;
+}
+const S = structuredClone(PRE.idle);          // live, tweened state
+let target = "idle";
+const rgb = (a, m = 1) => `rgb(${a.map(v => Math.round(clamp(v * m, 0, 255))).join(",")})`;
+function tween(dt) {
+  const k = 1 - Math.exp(-dt * (reduce ? 22 : 6));
+  const T = PRE[target];
+  for (const key in S) {
+    const a = S[key], b = T[key];
+    if (Array.isArray(a)) for (let i = 0; i < 3; i++) a[i] += (b[i] - a[i]) * k;
+    else S[key] = a + (b - a) * k;
+  }
+}
+
+/* ----------------------------- building the rig ----------------------------- */
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent?.appendChild(e);
+  return e;
+};
+const html = (parent, markup) => { parent.innerHTML = markup; return parent; };
+
+// Eyes: white, iris, pupil, catchlight, lower lid, upper lid (right eye is the left one mirrored)
+function eyeMarkup(s) {
+  const cx = 3 * s;
+  return `
+  <g clip-path="url(#cpEye)">
+    <ellipse class="white" rx="16" ry="13" fill="#FFFDF7"/>
+    <g class="gaze">
+      <g class="irisG"><circle r="8.8" fill="#7B4A2A"/><circle cy="3.2" r="5.2" fill="#A8703F" opacity=".75"/><circle r="8.8" fill="none" stroke="#3E2314" stroke-width="1.7"/></g>
+      <circle class="pupil" r="4.6" fill="#140C10"/>
+      <g class="catch"><circle cx="${cx}" cy="-3" r="2.4" fill="#fff"/><circle cx="${-cx}" cy="3" r="1.1" fill="#fff" opacity=".85"/></g>
+    </g>
+  </g>
+  <ellipse rx="15.5" ry="12.5" fill="none" stroke="#2A1B2E" stroke-width="2.2"/>
+  <g clip-path="url(#cpLid)">
+    <path class="lowerLid skin"/><path class="upperLid skin"/>
+    <path class="lowerLine" fill="none" stroke="#2A1B2E" stroke-width="2.2" stroke-linecap="round"/>
+    <path class="upperLine" fill="none" stroke="#2A1B2E" stroke-width="3.4" stroke-linecap="round"/>
+  </g>`;
+}
+const eyes = [["eyeL", 176, 1], ["eyeR", 224, -1]].map(([id, x, s]) => {
+  const g = $(id);
+  g.setAttribute("transform", s > 0 ? `translate(${x} 128)` : `translate(${x} 128) scale(-1 1)`);
+  g.innerHTML = eyeMarkup(s);
+  const q = c => g.querySelector("." + c);
+  return { s, gaze: q("gaze"), iris: q("irisG"), pupil: q("pupil"), catchL: q("catch"),
+           up: q("upperLid"), low: q("lowerLid"), upL: q("upperLine"), lowL: q("lowerLine") };
+});
+const brows = [["browL", "browLp", 176, 1], ["browR", "browRp", 224, -1]].map(([gid, pid, x, s]) => ({ g: $(gid), p: $(pid), x, s }));
+
+// Chakra orbs: purple, blue, green, yellow, orange, red, magenta (left to right)
+const ORB_COLORS = ["#8E4FD8", "#3E73E0", "#34B567", "#F5C928", "#F28A1E", "#E0372F", "#D93AA6"];
+const orbs = ORB_COLORS.map((c, i) => {
+  const g = el("g", {}, $("orbs"));
+  g.innerHTML = `<circle class="glow" r="20" fill="${c}" opacity=".28"/><circle r="11.5" fill="${c}" stroke="#2A1B2E" stroke-width="2.4"/><ellipse cx="-3.8" cy="-4.2" rx="4.2" ry="2.6" fill="#fff" opacity=".7" transform="rotate(-35 -3.8 -4.2)"/>`;
+  const a = (-155 + i * (130 / 6)) * Math.PI / 180;
+  return { g, glow: g.firstChild, x: 200 + 125 * Math.cos(a), y: 152 + 125 * Math.sin(a) };
+});
+
+// Cloud: lumps drawn twice (outline, then fill) so the silhouette has one clean outline
+const CLOUD = [
+  [72, 376, 30], [116, 372, 34], [161, 374, 36], [206, 375, 37], [251, 374, 36], [295, 372, 34], [338, 376, 30],
+  [88, 400, 28], [135, 406, 30], [182, 410, 30], [230, 410, 30], [277, 406, 30], [322, 400, 28],
+];
+const FRONT = [[112, 374, 24], [152, 374, 25], [196, 374, 26], [240, 374, 25], [284, 374, 24]];
+const lumps = (list, grow) => list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + grow}"/>`).join("");
+html($("cloudBack"), `<g fill="#2A2038">${lumps(CLOUD, 2.6)}</g><g fill="url(#gCloud)">${lumps(CLOUD, 0)}</g>
+  <g fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".55">
+    <path d="M52,366 q6,-14 20,-17"/><path d="M96,358 q10,-12 26,-12"/><path d="M142,356 q10,-10 24,-10"/><path d="M184,356 q10,-10 26,-9"/><path d="M232,357 q10,-9 24,-8"/><path d="M276,356 q8,-10 22,-10"/><path d="M322,364 q6,-10 18,-12"/>
+  </g>`);
+const half = r => `M${r[0] - r[2]},${r[1]}A${r[2]},${r[2]} 0 0 1 ${r[0] + r[2]},${r[1]}`;
+html($("cloudFront"), `<g fill="none" stroke="#2A2038" stroke-width="5.2">${FRONT.map(r => `<path d="${half(r)}"/>`).join("")}</g><g fill="url(#gCloud)">${FRONT.map(r => `<path d="${half(r)}Z"/>`).join("")}</g>
+  <g fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity=".5"><path d="M96,368 q8,-12 22,-12"/><path d="M180,372 q8,-12 22,-12"/><path d="M268,368 q8,-10 20,-10"/></g>`);
+
+// Limbs (the saint's arms and the cloud's arms share one FK rig)
+function limbMarkup(id, o) {
+  const stripes = o.stripes ? `<g class="stripes" stroke="#FFF8EC" stroke-width="3.4" stroke-linecap="round"><path/><path/><path/></g>` : "";
+  return `<g id="${id}">
+    <path class="o" fill="none" stroke="#2A1B2E" stroke-width="${o.w + 5.2}" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse class="bo" fill="#2A1B2E" rx="0" ry="0"/>
+    <path class="s" fill="none" style="stroke:${o.fill}" stroke-width="${o.w}" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse class="bs" style="fill:${o.fill}" rx="0" ry="0"/>
+    <path class="bc" fill="none" stroke="#2A1B2E" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+    ${stripes}
+    <g class="hand"><circle class="ho" fill="#2A1B2E"/><circle class="hs" style="fill:${o.fill}"/><path class="hf" fill="none" stroke="#2A1B2E" stroke-width="1.8" stroke-linecap="round" opacity=".55"/></g>
+  </g>`;
+}
+html($("arms"), limbMarkup("armL", { w: 22, fill: "var(--skin)", stripes: true }) + limbMarkup("armR", { w: 22, fill: "var(--skin)", stripes: true }));
+html($("cloudArms"), limbMarkup("cArmL", { w: 34, fill: "var(--cmid)" }) + limbMarkup("cArmR", { w: 34, fill: "var(--cmid)" }));
+const limb = id => { const g = $(id), q = c => g.querySelector("." + c);
+  return { g, o: q("o"), s: q("s"), bo: q("bo"), bs: q("bs"), bc: q("bc"), hand: q("hand"), ho: q("ho"), hs: q("hs"), hf: q("hf"), stripes: [...g.querySelectorAll(".stripes path")] }; };
+const armL = limb("armL"), armR = limb("armR"), cArmL = limb("cArmL"), cArmR = limb("cArmR");
+
+function setLimb(L, sx, sy, side, a1, a2, l1, l2, bic, handR) {
+  const r1 = a1 * Math.PI / 180, r2 = a2 * Math.PI / 180;
+  const ux = side * Math.cos(r1), uy = Math.sin(r1);
+  const ex = sx + ux * l1, ey = sy + uy * l1;
+  const hx = ex + side * Math.cos(r2) * l2, hy = ey + Math.sin(r2) * l2;
+  const d = `M${n2(sx)},${n2(sy)}L${n2(ex)},${n2(ey)}L${n2(hx)},${n2(hy)}`;
+  L.o.setAttribute("d", d); L.s.setAttribute("d", d);
+  L.ho.setAttribute("cx", n2(hx)); L.ho.setAttribute("cy", n2(hy)); L.ho.setAttribute("r", n2(handR + 2.6));
+  L.hs.setAttribute("cx", n2(hx)); L.hs.setAttribute("cy", n2(hy)); L.hs.setAttribute("r", n2(handR));
+  L.hf.setAttribute("d", `M${n2(hx - 4)},${n2(hy - 4)}q4,5 8,0M${n2(hx - 4)},${n2(hy + 1)}q4,5 8,0`);
+  L.hf.style.opacity = L.stripes.length ? clamp(bic, 0, 1) * 0.55 : 0;
+  // bicep bulge, drawn as a bump on the upper side of the upper arm
+  const ang = Math.atan2(uy, ux) * 180 / Math.PI;
+  const mx = sx + ux * l1 * 0.55 + side * uy * 9 * bic, my = sy + uy * l1 * 0.55 - side * ux * 9 * bic;
+  for (const [e, grow] of [[L.bs, 0], [L.bo, 2.6]]) {
+    e.setAttribute("rx", n2(Math.max(0, 15 * bic + grow * (bic > 0.02 ? 1 : 0))));
+    e.setAttribute("ry", n2(Math.max(0, 11 * bic + grow * (bic > 0.02 ? 1 : 0))));
+    e.setAttribute("cx", n2(mx)); e.setAttribute("cy", n2(my));
+    e.setAttribute("transform", `rotate(${n2(ang)} ${n2(mx)} ${n2(my)})`);
+  }
+  L.bc.setAttribute("d", bic > 0.02 ? `M${n2(mx - 6)},${n2(my + 7 * bic)}q6,3 12,0` : "");
+  L.bc.setAttribute("transform", `rotate(${n2(ang)} ${n2(mx)} ${n2(my)})`);
+  if (L.stripes.length) {
+    const len = Math.hypot(ex - sx, ey - sy) || 1, px = -(ey - sy) / len, py = (ex - sx) / len;
+    [0.5, 0.64, 0.78].forEach((t, i) => {
+      const cx = sx + (ex - sx) * t, cy = sy + (ey - sy) * t, h = i === 1 ? 9.6 : 8.6;
+      L.stripes[i].setAttribute("d", `M${n2(cx - px * h)},${n2(cy - py * h)}L${n2(cx + px * h)},${n2(cy + py * h)}`);
+    });
+  }
+}
+
+// Garland of jasmine and roses, draped from the shoulders
+(() => {
+  const P0 = [146, 226], C = [200, 314], P2 = [254, 226], N = 13;
+  const at = t => [(1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * C[0] + t * t * P2[0], (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * C[1] + t * t * P2[1]];
+  let m = `<path d="M${P0}Q${C} ${P2}" fill="none" stroke="#2A1B2E" stroke-width="8.4" stroke-linecap="round"/><path d="M${P0}Q${C} ${P2}" fill="none" stroke="#3E8A3E" stroke-width="5" stroke-linecap="round"/>`;
+  for (let i = 0; i <= N; i++) {
+    const [x, y] = at(i / N);
+    if (i % 2 === 0) {
+      let petals = "";
+      for (let k = 0; k < 5; k++) petals += `<ellipse cx="0" cy="-4.4" rx="2.9" ry="4.2" fill="#FFFDF4" stroke="#2A1B2E" stroke-width="1.3" transform="rotate(${k * 72})"/>`;
+      m += `<g transform="translate(${n2(x)} ${n2(y)}) rotate(${i * 17})">${petals}<circle r="2" fill="#F5C400"/></g>`;
+    } else {
+      m += `<g transform="translate(${n2(x)} ${n2(y)})"><circle r="6.6" fill="#E5446D" stroke="#2A1B2E" stroke-width="1.6"/><path d="M-3.4,0 q3.4,-4.6 6.8,0 q-3.4,4.2 -5.2,-1.4" fill="none" stroke="#9E1F42" stroke-width="1.4" stroke-linecap="round"/></g>`;
+    }
+  }
+  html($("garland"), m);
+})();
+
+/* ----- effect particles ----- */
+const fxBack = $("fxBack");
+// halo rings
+const haloRings = [0, 1, 2, 3].map(() => el("circle", { cx: 200, cy: 150, r: 80 }, $("haloRings")));
+// power rays
+(() => {
+  let m = "";
+  for (let i = 0; i < 16; i++) {
+    const L = i % 2 ? 160 : 215;
+    m += `<path d="M-12,-70 L0,${-L} L12,-70Z" fill="${i % 2 ? "#FFE680" : "#FFC928"}" stroke="#2A1B2E" stroke-width="2.2" stroke-linejoin="round" transform="rotate(${i * 22.5})"/>`;
+  }
+  html($("powerRays"), m);
+  $("powerRays").setAttribute("data-c", "200 240");
+})();
+// sun rays and rainbow
+(() => {
+  let m = "";
+  for (let i = 0; i < 10; i++) m += `<path d="M-5,-27 L0,-41 L5,-27Z" fill="#FFB52E" stroke="#2A1B2E" stroke-width="1.8" stroke-linejoin="round" transform="rotate(${i * 36})"/>`;
+  html($("sunRays"), m);
+  const cols = ["#E8453C", "#F5A623", "#F7E04F", "#5CC46A", "#4A90E2", "#8E5BD0"];
+  let r = "";
+  cols.forEach((c, i) => { const R = 92 - i * 8.5; r += `<path d="M${335 - R},352 A${R},${R} 0 0 1 ${335 + R},352" stroke="${c}"/>`; });
+  html($("rainbow"), r);
+})();
+// wind
+const windPaths = [
+  "M6,196 C70,168 118,226 190,198 S300,170 352,196 C378,208 374,238 352,232",
+  "M24,296 C88,272 150,322 222,296 S332,276 376,298",
+  "M10,92 C60,76 96,112 140,94 M268,88 C310,70 350,100 392,84",
+  "M18,392 C80,372 134,410 206,390 S318,370 380,392",
+  "M30,246 C48,236 62,252 80,240 M326,252 C344,240 360,258 380,244",
+].map(d => el("path", { d, "stroke-dasharray": "46 70" }, $("windFx")));
+// smoke puffs + curls
+const smokePuffs = Array.from({ length: 10 }, (_, i) => ({
+  e: el("circle", { fill: "#8F867C", stroke: "#2A1B2E", "stroke-width": 2.2, "stroke-opacity": 0.55 }, $("smokeFx")),
+  x: i % 2 ? 300 + (i * 17) % 80 : 20 + (i * 23) % 80, ph: i * 0.173, sp: 0.16 + (i % 4) * 0.03 }));
+const curls = [36, 366, 62].map((x, i) => ({
+  e: el("path", { d: "M0,0 C12,-10 -12,-24 0,-34 C13,-45 -9,-58 4,-68", fill: "none", stroke: "#6E665D", "stroke-width": 4.5, "stroke-linecap": "round" }, $("smokeFx")), x, ph: i * 0.33 }));
+// lightning bolts + rain
+const bolts = [112, 205, 296].map((x, i) => ({
+  e: el("path", { d: "M0,0 L-15,36 L-3,36 L-13,74 L15,28 L2,28 L11,0Z", fill: "#FFE14D", stroke: "#2A1B2E", "stroke-width": 2.4, "stroke-linejoin": "round" }, $("boltFx")), x, i }));
+const rain = Array.from({ length: 18 }, (_, i) => ({
+  e: el("path", { d: "M0,-10 L-3.2,10", stroke: "#4F8FE0", "stroke-width": 4.2, "stroke-linecap": "round", fill: "none" }, $("rainFx")),
+  x: 62 + (i * 47) % 280, ph: (i * 0.137) % 1, sp: 0.9 + ((i * 7) % 5) * 0.1 }));
+// sparkles (front), leaves, hearts, puffs, confetti
+const SPARKS = [[40, 124], [362, 112], [78, 62], [326, 56], [26, 262], [374, 252], [58, 330], [348, 336], [150, 22], [256, 18], [18, 190], [384, 190]];
+const sparks = SPARKS.map(([x, y], i) => {
+  const g = el("g", {}, $("sparkFx"));
+  g.innerHTML = `<use href="#spark" fill="#FFC93C" stroke="#2A1B2E" stroke-width="1.4"/><circle r="1.8" fill="#fff"/>`;
+  return { g, x, y, ph: i * 0.9, sz: 1.1 + (i % 3) * 0.35 };
+});
+const leaves = Array.from({ length: 7 }, (_, i) => {
+  const g = el("g", {}, $("leafFx"));
+  g.innerHTML = `<path d="M-11,0 C-5,-9 6,-9 12,0 C6,9 -5,9 -11,0Z" fill="${["#4FAE4A", "#6CC24A", "#3C9A3E"][i % 3]}" stroke="#2A1B2E" stroke-width="1.8" stroke-linejoin="round"/><path d="M-10,0 L11,0" stroke="#2A1B2E" stroke-width="1.4" opacity=".6"/>`;
+  return { g, ph: (i * 0.151) % 1, sp: 0.2 + (i % 3) * 0.05, y: 60 + (i * 61) % 340 };
+});
+const hearts = Array.from({ length: 9 }, (_, i) => {
+  const u = el("use", { href: "#heart", fill: ["#FF5C8A", "#E8335F", "#FF9DBB"][i % 3], stroke: "#2A1B2E", "stroke-width": 1.6 }, $("heartFx"));
+  return { e: u, ph: (i * 0.118) % 1, sp: 0.16 + (i % 4) * 0.025, x: 200 + (i % 2 ? 1 : -1) * (88 + (i * 29) % 62), sz: 0.9 + (i % 3) * 0.35 };
+});
+const puffs = Array.from({ length: 22 }, () => ({ e: el("circle", { fill: "#fff", stroke: "#2A1B2E", "stroke-opacity": 0.35, "stroke-width": 1.5, opacity: 0 }, $("puffFx")), life: 0, x: 0, y: 0, vx: 0, vy: 0 }));
+const CONF = ["#8E4FD8", "#3E73E0", "#34B567", "#F5C928", "#F28A1E", "#E0372F", "#D93AA6"];
+const confetti = Array.from({ length: 44 }, (_, i) => ({ e: el("rect", { width: 7, height: 11, rx: 1.6, fill: CONF[i % 7], opacity: 0 }, $("confettiFx")), x: 0, y: 0, vx: 0, vy: 0, r: 0, vr: 0, life: 0 }));
+let confettiLeft = 0;
+
+/* ------------------------------ UI + game rules ------------------------------ */
+const STORE_KEY = "navarasa2d-found";
+function loadFound() {
+  try { return new Set(JSON.parse(localStorage.getItem(STORE_KEY) || "[]").filter(id => BY_ID[id] && id !== "idle")); }
+  catch { return new Set(); }
+}
+function saveFound() { try { localStorage.setItem(STORE_KEY, JSON.stringify([...found])); } catch {} }
+let found = loadFound();
+let current = "idle";
+let idleTimer = 0;
+let celebrated = found.size === MOODS.length;
+
+const chips = {};
+for (const m of MOODS) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.type = "button"; b.id = `chip-${m.id}`;
+  b.style.setProperty("--c", m.color);
+  b.innerHTML = `<span class="dot"></span><span class="d"></span><span class="e"></span>`;
+  b.addEventListener("click", () => { if (found.has(m.id)) setMood(m.id); });
+  $("rasas").append(b);
+  chips[m.id] = b;
+}
+function renderChips(justFound) {
+  for (const m of MOODS) {
+    const b = chips[m.id], has = found.has(m.id);
+    b.disabled = !has;
+    b.querySelector(".d").textContent = has ? m.deva : "?";
+    b.querySelector(".e").textContent = has ? m.eng : "Hidden";
+    b.setAttribute("aria-label", has ? `${m.rasa}, ${m.eng}` : "Not found yet");
+    b.setAttribute("aria-pressed", String(current === m.id));
+    b.classList.toggle("new", m.id === justFound);
+  }
+  $("tally").textContent = `${found.size} of ${MOODS.length} rasas found`;
+}
+function renderMood(m) {
+  const el = $("mood");
+  $("moodDeva").textContent = m.deva;
+  $("moodRasa").textContent = m.rasa;
+  $("moodEng").textContent = `· ${m.eng}`;
+  el.style.setProperty("--mood", m.color);
+  el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap");
+}
+
+const spring = { k: 0, v: 0 };
+function poke(a) { spring.v = clamp(spring.v + (reduce ? a * 0.25 : a), -3.2, 3.2); }
+function burst(color) {
+  if (reduce) return;
+  puffs.forEach((p, i) => {
+    const a = (i / puffs.length) * Math.PI * 2 + Math.random() * 0.3;
+    p.x = 200 + Math.cos(a) * 105; p.y = 392 + Math.sin(a) * 30;
+    p.vx = Math.cos(a) * (110 + Math.random() * 90); p.vy = Math.sin(a) * 50 - 40 - Math.random() * 70;
+    p.life = 1; p.big = 7 + Math.random() * 8;
+    p.e.setAttribute("fill", i % 3 === 0 && color.startsWith("#") ? color : "#fff");
+  });
+}
+function celebrate() {
+  $("toast").hidden = false;
+  setTimeout(() => { $("toast").hidden = true; }, 4200);
+  if (reduce) return;
+  confettiLeft = 4;
+  confetti.forEach(c => { c.x = 10 + Math.random() * 380; c.y = -20 - Math.random() * 120; c.vx = (Math.random() - 0.5) * 40; c.vy = 90 + Math.random() * 90; c.r = Math.random() * 360; c.vr = (Math.random() - 0.5) * 500; c.life = 1; });
+}
+
+function setMood(id) {
+  clearTimeout(idleTimer);
+  const m = BY_ID[id];
+  const changed = id !== current;
+  current = id; target = id;
+  if (changed) { poke(-2.6); burst(m.color); renderMood(m); }
+  let justFound = null;
+  if (id !== "idle" && !found.has(id)) { found.add(id); justFound = id; saveFound(); }
+  renderChips(justFound);
+  if (found.size === MOODS.length && !celebrated) { celebrated = true; celebrate(); }
+  if (id !== "idle") idleTimer = setTimeout(() => setMood("idle"), RETURN_TO_IDLE_MS);
+}
+function nextMood() {
+  const pool = MOODS.filter(m => m.id !== current && !found.has(m.id));
+  const choices = pool.length ? pool : MOODS.filter(m => m.id !== current);
+  return choices[Math.floor(Math.random() * choices.length)].id;
+}
+function tapSaint() { $("hint").hidden = true; setMood(nextMood()); }
+
+// Only taps on the saint or his cloud count
+const box = $("sceneBox"), svg = $("scene");
+box.addEventListener("pointerdown", ev => { if (ev.target.closest("#cloud, #saint, #cloudFront")) tapSaint(); });
+box.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tapSaint(); } });
+// the eyes drift toward the pointer
+let px = 0, py = 0, pxs = 0, pys = 0;
+window.addEventListener("pointermove", ev => {
+  const r = svg.getBoundingClientRect();
+  px = clamp((ev.clientX - (r.left + r.width / 2)) / (r.width * 0.6), -1, 1);
+  py = clamp((ev.clientY - (r.top + r.height * 0.3)) / (r.height * 0.6), -1, 1);
+});
+
+/* --------------------------------- animation --------------------------------- */
+const stage = $("stage"), root = document.documentElement;
+const gc = [$("gc0"), $("gc1"), $("gc2")];
+const fl = { squash: $("squash"), float: $("float"), shadow: $("shadow"), saint: $("saint"), head: $("head"), cloud: $("cloud"), cloudArms: $("cloudArms") };
+const mouthFill = $("mouthFill"), mouthLine = $("mouthLine"), mouthClip = $("mouthClip");
+const teethR = $("teeth"), gritLines = $("gritLines"), tongueIn = $("tongueIn"), tongueOut = $("tongueOut");
+const tearDrops = $("tearDrops");
+const tears = [-1, 1].flatMap(s => [0, 0.33, 0.66].map(ph => ({ s, ph, e: el("path", { d: "M0,-5 C4,0 5,3 0,5.5 C-5,3 -4,0 0,-5Z", fill: "#9FD8F8", stroke: "#2A1B2E", "stroke-width": 1.3 }, tearDrops) })));
+let blinkAt = 2.4, blinkT = -1, time = 1.3;
+
+const lidPath = (m, b, t, upper) => {
+  const yo = m + b - t, yi = m + b + t, c = m - b;
+  const edge = `M-22,${n2(yo)}Q0,${n2(c)} 22,${n2(yi)}`;
+  return [edge, edge + (upper ? "V-30H-22Z" : "V30H-22Z")];
+};
+const browD = (tilt, arch, th) => {
+  const oY = -tilt, iY = tilt, mY = -arch, c = 2 * mY - (oY + iY) / 2;
+  return `M-19,${n2(oY - 1.5)}Q0,${n2(c - th)} 19,${n2(iY - 1.5)}L19,${n2(iY + 1.5)}Q0,${n2(c + th)} -19,${n2(oY + 1.5)}Z`;
+};
+const fade = (u, a, b) => u < a ? u / a : u > b ? (1 - u) / (1 - b) : 1;
+
+function draw(dt) {
+  const t = time, calm = reduce ? 0 : 1;
+
+  // sky + cloud palette
+  stage.style.setProperty("--sky-a", rgb(S.sky0));
+  stage.style.setProperty("--sky-b", rgb(S.sky1));
+  gc[0].setAttribute("stop-color", rgb(S.cTop)); gc[1].setAttribute("stop-color", rgb(S.cMid)); gc[2].setAttribute("stop-color", rgb(S.cBot));
+  fl.cloud.style.setProperty("--cmid", rgb(S.cMid));
+  const saintEl = fl.saint;
+  saintEl.style.setProperty("--skin", rgb(S.skin));
+  saintEl.style.setProperty("--skinShade", rgb(S.skin, 0.9));
+
+  // float, sway, shake, tremble, bounce, squash
+  const fy = 6 * S.bob * Math.sin(t * 1.15) * calm;
+  const sway = 0.9 * Math.sin(t * 0.7) * calm;
+  const jx = calm * (S.shake * (1.7 * Math.sin(t * 47) + 1.1 * Math.sin(t * 61)) + S.tremble * 1.5 * Math.sin(t * 39));
+  const jy = calm * (S.shake * 1.2 * Math.sin(t * 53) - S.bounce * 3.6 * Math.abs(Math.sin(t * 12)));
+  const jr = calm * S.tremble * 0.9 * Math.sin(t * 33);
+  fl.float.setAttribute("transform", `translate(${n2(jx)} ${n2(fy + jy)}) rotate(${n2(sway + jr)} 200 400)`);
+  const lift = clamp((-fy + 6) / 12, 0, 1);
+  fl.shadow.setAttribute("rx", n2(98 - 18 * lift)); fl.shadow.setAttribute("ry", n2(10 - 1.6 * lift)); fl.shadow.setAttribute("opacity", n2(0.3 - 0.12 * lift));
+  const acc = -120 * spring.k - 9 * spring.v; spring.v += acc * dt; spring.k = clamp(spring.k + spring.v * dt, -0.32, 0.32);
+  fl.squash.setAttribute("transform", `translate(200 440) scale(${n2(1 + 0.5 * spring.k)} ${n2(1 - spring.k)}) translate(-200 -440)`);
+
+  // breathing and head pose
+  const br = Math.sin(t * 1.5) * S.breath * calm;
+  saintEl.setAttribute("transform", `translate(200 350) scale(${n2(1 + 0.012 * br)} ${n2(1 + 0.02 * br)}) translate(-200 -350)`);
+  fl.head.setAttribute("transform", `translate(0 ${n2(S.headY - 1.4 * br)}) rotate(${n2(S.headTilt + 1.1 * Math.sin(t * 0.6) * calm)} 200 214)`);
+
+  // arms
+  const flex = S.cArms > 0.02 ? Math.sin(t * 5.5) * calm : 0;
+  setLimb(armL, 146, 236, -1, S.a1, S.a2, 50, 60, S.bicep, 10.5);
+  setLimb(armR, 254, 236, 1, S.a1, S.a2, 50, 60, S.bicep, 10.5);
+  const ca = S.cArms;
+  setLimb(cArmL, 80, 374, -1, -14, -100 + 9 * flex, 46 * ca, 46 * ca, ca * (0.85 + 0.15 * flex), 20 * ca);
+  setLimb(cArmR, 320, 374, 1, -14, -100 + 9 * flex, 46 * ca, 46 * ca, ca * (0.85 + 0.15 * flex), 20 * ca);
+
+  // brows
+  for (const b of brows) {
+    const bx = b.s > 0 ? b.x + S.browIn : b.x - S.browIn;
+    b.g.setAttribute("transform", b.s > 0 ? `translate(${n2(bx)} ${n2(S.browY)})` : `translate(${n2(bx)} ${n2(S.browY)}) scale(-1 1)`);
+    b.p.setAttribute("d", browD(S.browTilt, S.browArch, S.browThick));
+  }
+
+  // blink
+  let bk = 0;
+  if (!reduce) {
+    if (blinkT < 0 && t > blinkAt) { blinkT = 0; }
+    if (blinkT >= 0) { blinkT += dt; const u = blinkT / 0.17; bk = u < 1 ? Math.sin(u * Math.PI) : 0; if (u >= 1) { blinkT = -1; blinkAt = t + 2.2 + Math.random() * 3.4; if (Math.random() < 0.18) blinkAt = t + 0.28; } }
+  }
+  bk *= clamp(S.blink, 0, 1);
+
+  // eyes
+  pxs += (px - pxs) * Math.min(1, dt * 4); pys += (py - pys) * Math.min(1, dt * 4);
+  const open = clamp((S.ulM + 4) / -8, 0, 1);
+  const nerv = S.tremble * 1.8 * Math.sin(t * 7) * calm;
+  const gx = clamp(S.gazeX + pxs * 2.6 * open + 1.1 * Math.sin(t * 0.5) * calm * open + nerv, -4, 4);
+  const gy = clamp(S.gazeY + pys * 1.6 * open, -3, 3);
+  const um = lerp(S.ulM, 8, bk), ub = lerp(S.ulB, 3.5, bk), ut = S.ulT * (1 - bk);
+  const lm = lerp(S.llM, 7.5, bk), lb = lerp(S.llB, 3.5, bk);
+  const [upLine, upFill] = lidPath(um, ub, ut, true), [loLine, loFill] = lidPath(lm, lb, 0, false);
+  for (const E of eyes) {
+    E.gaze.setAttribute("transform", `translate(${n2(gx * E.s)} ${n2(gy)})`);
+    E.iris.setAttribute("transform", `scale(${n2(S.iris)})`);
+    E.pupil.setAttribute("transform", `scale(${n2(S.pupil)})`);
+    E.catchL.setAttribute("transform", `scale(${n2(S.catch)})`);
+    E.up.setAttribute("d", upFill); E.upL.setAttribute("d", upLine);
+    E.low.setAttribute("d", loFill); E.lowL.setAttribute("d", loLine);
+    E.lowL.setAttribute("opacity", n2(clamp((14 - lm) / 3, 0, 1)));
+  }
+
+  // mouth
+  const { mw: w, mcy: cy, mk: k } = S;
+  const mp = `M${n2(-w)},${n2(cy)}C${n2(-w * k)},${n2(S.muy)} ${n2(w * k)},${n2(S.muy)} ${n2(w)},${n2(cy)}C${n2(w * k)},${n2(S.mly)} ${n2(-w * k)},${n2(S.mly)} ${n2(-w)},${n2(cy)}Z`;
+  mouthFill.setAttribute("d", mp); mouthLine.setAttribute("d", mp); mouthClip.setAttribute("d", mp);
+  const upperMid = 0.25 * cy + 0.75 * S.muy, lowerMid = 0.25 * cy + 0.75 * S.mly;
+  teethR.setAttribute("y", n2(upperMid - 2)); teethR.setAttribute("height", n2(Math.max(0, S.teeth) * 9));
+  gritLines.setAttribute("opacity", n2(clamp(S.grit, 0, 1)));
+  tongueIn.setAttribute("cy", n2(lowerMid - 2)); tongueIn.setAttribute("opacity", n2(clamp(S.tongueIn, 0, 1)));
+  tongueOut.setAttribute("transform", `translate(0 ${n2(lowerMid - 4)}) scale(1 ${n2(Math.max(0.001, S.tongueOut))})`);
+  tongueOut.setAttribute("opacity", S.tongueOut > 0.03 ? 1 : 0);
+  $("moustache").setAttribute("transform", `translate(0 ${n2(S.mouY)})`);
+
+  // cheeks
+  for (const [id, x] of [["cheekL", 160], ["cheekR", 240]]) {
+    const c = $(id);
+    c.setAttribute("rx", n2(17 * S.cheekR)); c.setAttribute("ry", n2(12 * S.cheekR));
+    c.setAttribute("cy", n2(153 + (S.cheekR - 1) * -8)); c.setAttribute("opacity", n2(clamp(S.cheek, 0, 1)));
+  }
+
+  // face extras: tears, sweat, anger mark
+  const tA = clamp(S.tears, 0, 1);
+  $("tearL").setAttribute("opacity", n2(tA)); $("tearR").setAttribute("opacity", n2(tA));
+  for (const d of tears) {
+    const u = (t * 0.55 + d.ph) % 1;
+    d.e.setAttribute("transform", `translate(${n2(200 + d.s * (30 + 6 * Math.sin(u * Math.PI)) )} ${n2(142 + u * 52)}) scale(1.5)`);
+    d.e.setAttribute("opacity", n2(tA * fade(u, 0.1, 0.8)));
+  }
+  const sw = $("sweat"), su = (t * 0.45) % 1;
+  sw.setAttribute("transform", `translate(${n2(244 - su * 4)} ${n2(98 + su * 32)}) scale(${n2(0.9 + 0.2 * Math.sin(t * 3))})`);
+  sw.setAttribute("opacity", n2(clamp(S.sweat, 0, 1) * fade(su, 0.1, 0.85)));
+  const vn = $("vein");
+  vn.setAttribute("transform", `translate(250 88) scale(${n2(1 + 0.14 * Math.sin(t * 8) * calm)})`);
+  vn.setAttribute("opacity", n2(clamp(S.vein, 0, 1)));
+
+  // crown + garland
+  const cw = $("crown"), gl = $("garland");
+  cw.setAttribute("opacity", n2(clamp(S.crown, 0, 1)));
+  cw.setAttribute("transform", `translate(0 ${n2((1 - S.crown) * -16)})`);
+  gl.setAttribute("opacity", n2(clamp(S.garland, 0, 1)));
+  gl.setAttribute("transform", `translate(0 ${n2((1 - S.garland) * -10)})`);
+
+  // chakra orbs pulse in a wave
+  orbs.forEach((o, i) => {
+    const wv = Math.sin(t * 2.2 - i * 0.75) * calm;
+    const s = 1 + 0.13 * wv;
+    o.g.setAttribute("transform", `translate(${n2(o.x)} ${n2(o.y + 2.2 * Math.sin(t * 1.3 + i) * calm)}) scale(${n2(s)})`);
+    o.glow.setAttribute("opacity", n2(0.26 + 0.2 * wv));
+  });
+
+  drawFx(t);
+}
+
+function drawFx(t) {
+  const show = (id, a) => { const g = $(id); const on = a > 0.02; g.style.display = on ? "" : "none"; if (on) g.setAttribute("opacity", n2(clamp(a, 0, 1))); return on; };
+  const run = reduce ? 0 : 1;
+
+  if (show("haloFx", S.halo)) {
+    haloRings.forEach((r, i) => {
+      const u = (t * 0.28 * run + i / 4) % 1;
+      r.setAttribute("r", n2(78 + u * 96)); r.setAttribute("stroke-width", n2(7 - u * 5)); r.setAttribute("opacity", n2(0.85 * (1 - u)));
+    });
+  }
+  if (show("sunsetFx", S.love)) {
+    const g = $("sunsetFx"); g.setAttribute("transform", `translate(200 250) scale(${n2(1 + 0.025 * Math.sin(t * 1.6) * run)}) translate(-200 -250)`);
+  }
+  if (show("powerFx", S.power)) {
+    $("powerRays").setAttribute("transform", `translate(200 240) rotate(${n2(t * 14 * run)}) scale(${n2(0.9 + 0.1 * Math.sin(t * 4) * run)})`);
+  }
+  if (show("sunFx", S.sun)) {
+    $("sunRays").setAttribute("transform", `rotate(${n2(t * 40 * run)})`);
+  }
+  if (show("windFx", S.wind)) {
+    windPaths.forEach((p, i) => p.setAttribute("stroke-dashoffset", n2(-t * 150 * run - i * 30)));
+  }
+  if (show("smokeFx", S.smoke)) {
+    for (const p of smokePuffs) {
+      const u = (t * p.sp * run + p.ph) % 1;
+      p.e.setAttribute("cx", n2(p.x + 14 * Math.sin(t * 0.9 + p.ph * 20))); p.e.setAttribute("cy", n2(400 - u * 230));
+      p.e.setAttribute("r", n2(9 + u * 20)); p.e.setAttribute("opacity", n2(0.7 * fade(u, 0.12, 0.7)));
+    }
+    for (const c of curls) {
+      const u = (t * 0.14 * run + c.ph) % 1;
+      c.e.setAttribute("transform", `translate(${n2(c.x + 8 * Math.sin(t * 1.3 + c.ph * 9))} ${n2(380 - u * 180)})`); c.e.setAttribute("opacity", n2(0.85 * fade(u, 0.1, 0.7)));
+    }
+  }
+  if (show("boltFx", S.storm)) {
+    for (const b of bolts) {
+      const f = Math.sin(t * 3.1 + b.i * 2.3) * Math.sin(t * 1.3 + b.i);
+      const on = reduce ? b.i !== 1 : f > 0.28;
+      b.e.setAttribute("transform", `translate(${b.x} 424) scale(${b.i === 1 ? 1.12 : 0.92})`);
+      b.e.setAttribute("opacity", on ? 1 : 0);
+    }
+  }
+  if (show("rainFx", S.rain)) {
+    for (const d of rain) {
+      const u = (t * d.sp * run + d.ph) % 1;
+      d.e.setAttribute("transform", `translate(${n2(d.x - u * 14)} ${n2(424 + u * 74)})`);
+      d.e.setAttribute("opacity", n2(0.9 * fade(u, 0.08, 0.82)));
+    }
+  }
+  if (show("sparkFx", S.spark)) {
+    for (const s of sparks) {
+      const tw = reduce ? 0.8 : Math.max(0, Math.sin(t * 2.4 + s.ph)) ** 2;
+      s.g.setAttribute("transform", `translate(${s.x} ${s.y}) rotate(${n2(t * 20 * run + s.ph * 40)}) scale(${n2((0.25 + 0.95 * tw) * s.sz)})`);
+    }
+  }
+  if (show("leafFx", S.wind)) {
+    for (const l of leaves) {
+      const u = (t * l.sp * run + l.ph) % 1;
+      l.g.setAttribute("transform", `translate(${n2(430 - u * 470)} ${n2(l.y + 26 * Math.sin(t * 1.8 + l.ph * 12))}) rotate(${n2(t * 150 * run + l.ph * 360)})`);
+    }
+  }
+  if (show("heartFx", S.love)) {
+    for (const h of hearts) {
+      const u = (t * h.sp * run + h.ph) % 1;
+      const s = h.sz * (0.7 + 0.9 * Math.sin(u * Math.PI));
+      h.e.setAttribute("transform", `translate(${n2(h.x + 16 * Math.sin(t * 1.4 + h.ph * 14))} ${n2(400 - u * 330)}) scale(${n2(s)})`);
+      h.e.setAttribute("opacity", n2(fade(u, 0.1, 0.75)));
+    }
+  }
+}
+
+// puffs and confetti run outside the mood state
+function drawParticles(dt) {
+  for (const p of puffs) {
+    if (p.life <= 0) continue;
+    p.life -= dt * 1.5;
+    if (p.life <= 0) { p.e.setAttribute("opacity", 0); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - dt * 2.4; p.vy = p.vy * (1 - dt * 2.4) - 12 * dt;
+    p.e.setAttribute("cx", n2(p.x)); p.e.setAttribute("cy", n2(p.y));
+    p.e.setAttribute("r", n2(p.big * (0.5 + (1 - p.life) * 1.2))); p.e.setAttribute("opacity", n2(Math.min(1, p.life * 1.6)));
+  }
+  if (confettiLeft > 0) {
+    confettiLeft -= dt;
+    for (const c of confetti) {
+      if (c.life <= 0) continue;
+      c.x += (c.vx + 26 * Math.sin(c.y * 0.04)) * dt; c.y += c.vy * dt; c.r += c.vr * dt;
+      if (c.y > 540) c.life = 0;
+      c.e.setAttribute("transform", `translate(${n2(c.x)} ${n2(c.y)}) rotate(${n2(c.r)})`);
+      c.e.setAttribute("opacity", c.life > 0 ? 1 : 0);
+    }
+    if (confettiLeft <= 0) confetti.forEach(c => c.e.setAttribute("opacity", 0));
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  if (!reduce) time += dt;
+  tween(dt);
+  draw(dt);
+  drawParticles(dt);
+  requestAnimationFrame(frame);
+}
+
+/* ----------------------------------- boot ----------------------------------- */
+function start(data) {
+  if (data.found) found = new Set(data.found.filter(id => BY_ID[id] && id !== "idle"));
+  renderChips();
+  renderMood(IDLE);
+  requestAnimationFrame(t => { last = t; frame(t); });
+}
+window.claude?.hot?.snapshot?.(() => ({ found: [...found] }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+<script>/* host hooks for the portfolio's handheld */
+window.gameStart = () => document.documentElement.classList.remove('bgonly');   // pressing the handheld screen: the UI appears, play starts
+addEventListener('keydown', e => { if (e.key === 'Escape') { try { const x = parent.document.getElementById('hhExit'); if (x) x.click(); } catch (_) {} } });
+</script>
+</html>

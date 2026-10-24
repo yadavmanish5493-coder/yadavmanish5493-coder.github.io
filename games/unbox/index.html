@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unbox: how to play</title>
+<meta name="description" content="A playable walkthrough of Unbox, the hybrid board game for business thinking, on its real boards. Place the cards, build the strategy, test it.">
+<link rel="stylesheet" href="intro.css">
+<link rel="stylesheet" href="see/see.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<script>
+/* embedded in the portfolio's handheld: ?embed, &bg (attract screen only, no UI), &inset=<px> (keep UI clear of the pillars) */
+(() => { const Q = new URLSearchParams(location.search), h = document.documentElement;
+  if (Q.has('embed')) h.classList.add('embed'); if (Q.has('bg')) h.classList.add('bgonly');
+  h.style.setProperty('--ix', (parseFloat(Q.get('inset')) || 0) + 'px'); })();
+</script>
+<style>
+:root{
+  --yellow:#ffd21f; --ink:#1a1030; --navy:#1b1650; --navy2:#120c36; --paper:#fff8e6;
+  --red:#e8374c; --blue:#2d8cff; --pink:#ff4f9a; --green:#2fb870; --orange:#ff7b2c; --purple:#7a3cff;
+  --ix:0px;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(11px,min(1.9vh,1.4vw),18px);height:100%}
+body{margin:0;height:100%;overflow:hidden;color:var(--ink);font:700 1rem/1.25 Nunito,system-ui,sans-serif;background:
+  radial-gradient(circle at 1px 1px,rgba(255,255,255,.07) 1.2px,transparent 1.6px) 0 0/14px 14px,
+  radial-gradient(120% 90% at 50% 0%,var(--navy),var(--navy2));user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+h1,h2,h3,.bang{font-family:Bangers,Impact,sans-serif;font-weight:400;letter-spacing:.04em;margin:0}
+
+/* ---------- app frame ---------- */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#hud{flex:none;display:flex;align-items:center;gap:.8rem;height:3rem;padding:0 calc(var(--ix) + .9rem);background:var(--yellow);border-bottom:.28rem solid var(--ink);position:relative;z-index:3}
+#hud .logo{font:400 1.5rem Bangers;letter-spacing:.05em;color:var(--ink);text-shadow:.08rem .08rem 0 #fff8;white-space:nowrap}
+#pips{flex:1;display:flex;align-items:center;gap:.28rem;min-width:0;justify-content:center}
+#pips i{display:block;width:.95rem;height:.95rem;border-radius:50%;border:.17rem solid var(--ink);background:#fff8;flex:none}
+#pips i.on{background:var(--red)} #pips i.done{background:var(--ink)}
+#pips b{font:400 .85rem Bangers;letter-spacing:.06em;margin:0 .3rem 0 .5rem;white-space:nowrap}
+#score{font:400 1.25rem Bangers;letter-spacing:.05em;background:var(--ink);color:var(--yellow);padding:.12rem .7rem;border-radius:.5rem;white-space:nowrap}
+html:not(.embed) #hud{padding:0 1rem}
+html.embed #hud .logo{display:none}
+html.embed #app{padding-top:16px}
+html.embed #panel{padding-top:22px}   /* clear of the handheld's lintel */
+
+#stage{flex:1;min-height:0;display:flex;flex-direction:column;padding:.6rem calc(var(--ix) + .8rem) .6rem;gap:.5rem;position:relative}
+#cap{flex:none;display:flex;flex-direction:column;gap:.3rem;background:var(--yellow);border:.2rem solid var(--ink);border-radius:.6rem;padding:.5rem .7rem .6rem;box-shadow:.25rem .25rem 0 var(--ink);min-height:2.9rem}
+#cap .hd{display:flex;align-items:center;gap:.5rem}
+#cap .no{flex:none;font:400 1.5rem Bangers;background:var(--ink);color:var(--yellow);padding:.02rem .6rem;border-radius:.35rem;letter-spacing:.05em}
+#cap .of{font:900 .8rem Nunito;letter-spacing:.08em;color:var(--ink);opacity:.7;white-space:nowrap}
+#cap .ttl{font:400 1.7rem/1 Bangers;letter-spacing:.05em;color:var(--red);text-shadow:.07rem .07rem 0 var(--ink)}
+#cap .tx{font-size:1.08rem;line-height:1.25;font-weight:900;color:var(--ink)}
+#cap .tx b{color:var(--red);background:#fff8;border-radius:.2rem;padding:0 .2rem}
+#cap.pop{animation:pop .45s}
+@keyframes pop{0%{transform:scale(.94) rotate(-2deg)}60%{transform:scale(1.03) rotate(.4deg)}100%{transform:none}}
+#how{margin-left:auto;flex:none;font:400 .95rem Bangers;letter-spacing:.06em;background:var(--ink);color:var(--yellow);border-radius:999px;padding:.12rem .7rem;white-space:nowrap;border:.12rem solid var(--ink)}
+#how:hover{background:var(--red);color:#fff}
+#rail{display:flex;gap:.28rem;flex-wrap:wrap;margin-top:.1rem}
+#rail:empty{display:none}
+#rail i{font:400 1rem/1.7rem Bangers;font-style:normal;width:1.8rem;height:1.8rem;text-align:center;border-radius:.4rem;border:.14rem solid var(--ink);background:#fff8;color:var(--ink);opacity:.7}
+#rail i.done{background:var(--ink);color:var(--yellow);opacity:1}
+#rail i.on{background:var(--red);color:#fff;opacity:1;transform:translateY(-.1rem);box-shadow:.12rem .12rem 0 var(--ink)}
+
+/* ---------- the real board (an image from the design document) with invisible drop zones over its slots ---------- */
+#board{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;container:bd/size}
+.bw{position:relative;width:min(100cqw,calc(100cqh * var(--ar)));aspect-ratio:var(--ar);container-type:inline-size;border-radius:.5rem;box-shadow:0 0 0 .22rem var(--ink),0 .6rem 1.6rem #000a;background:#10223a}
+.bw>svg{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:.5rem;pointer-events:none;overflow:hidden}
+.slot{position:absolute;border-radius:1.6cqw;display:flex;align-items:center;justify-content:center;transition:box-shadow .2s,background .2s}
+.slot.focus{box-shadow:0 0 0 .22rem var(--yellow),0 0 1.2rem 0 #ffd21fcc;background:rgba(255,210,31,.14);animation:blink 1s infinite}
+@keyframes blink{50%{background:rgba(255,210,31,.3)}}
+.slot.ok{box-shadow:0 0 0 .26rem #fff,0 0 1.4rem .2rem var(--yellow);background:rgba(255,210,31,.4)}
+.slot.has{box-shadow:none;background:none;animation:none}
+.slot.bad{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-.4rem)}40%{transform:translateX(.4rem)}60%{transform:translateX(-.3rem)}80%{transform:translateX(.3rem)}}
+.note{width:100%;height:100%;min-height:0;background:var(--paper);border:.12rem solid var(--ink);border-radius:.3rem;box-shadow:.12rem .12rem 0 #0006;padding:.2rem .35rem;font-size:clamp(6.5px,1.55cqw,15px);line-height:1.2;color:var(--ink);display:flex;align-items:center;overflow:hidden;transform:rotate(-.6deg);animation:slam .45s}
+.note b{color:var(--red)}
+.note.wide{font-size:clamp(6.5px,1.4cqw,14px);line-height:1.18}
+
+/* ---------- cards ---------- */
+.card{color:var(--ink);position:relative;width:100%;height:100%;min-width:0;background:var(--paper);border:.18rem solid var(--ink);border-radius:.5rem;box-shadow:.14rem .14rem 0 var(--ink);overflow:hidden;display:flex;flex-direction:column;cursor:grab;touch-action:none;text-align:left;transition:transform .15s,box-shadow .15s}
+.card .tg{flex:none;font:400 .82rem Bangers;letter-spacing:.06em;color:#fff;background:var(--c,var(--purple));padding:.08rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:.15rem solid var(--ink)}
+.card .t{padding:.25rem .45rem 0;font-weight:800;font-size:.9rem;line-height:1.1}
+.card .d{padding:.15rem .45rem .3rem;font-size:.72rem;line-height:1.18;color:#4a3d66;font-weight:700;overflow:hidden}
+.card:hover{transform:translateY(-.15rem) rotate(-1deg)}
+.card.lift{opacity:.35}
+.card.ghost{position:fixed;left:0;top:0;z-index:99;pointer-events:none;box-shadow:.3rem .5rem 0 #0006;cursor:grabbing}
+/* a card sitting on the board is a small sticker */
+.slot .card{border-width:max(1px,.1rem);box-shadow:.1rem .1rem 0 #0006;cursor:default;border-radius:.3rem}
+.slot .card:hover{transform:none}
+.slot .card .tg{font-size:clamp(5.5px,1.3cqw,13px);padding:.05rem .25rem;border-bottom-width:max(1px,.08rem)}
+.slot .card .t{flex:1;display:flex;align-items:center;padding:.1rem .25rem;font-size:clamp(6.5px,1.55cqw,15px);line-height:1.12}
+.slot .card .d{display:none}
+.slot .card.fresh{animation:slam .45s}
+@keyframes slam{0%{transform:scale(1.6);opacity:0}60%{transform:scale(.92)}100%{transform:none;opacity:1}}
+.pickable .slot .card{cursor:pointer}
+.pickable .slot .card:hover{transform:scale(1.07);z-index:3}
+.card.sel{outline:.2rem solid var(--yellow);outline-offset:-.05rem;box-shadow:0 0 0 .18rem var(--red)}
+.card .rk{position:absolute;right:.1rem;top:.1rem;width:1.15rem;height:1.15rem;border-radius:50%;background:var(--red);color:#fff;font:400 .85rem/1.15rem Bangers;text-align:center;border:.1rem solid var(--ink);display:none}
+.card.sel .rk{display:block}
+
+#side{display:contents}
+#cap{order:-1}
+#tray{order:2}
+#tray{flex:none;height:9.2rem;display:flex;gap:.6rem;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:.35rem .25rem .5rem;scrollbar-width:thin;justify-content:safe center;position:relative}
+#tray .card{flex:none;width:11rem;height:auto}
+#tray.help{align-items:center;justify-content:center;gap:1rem}
+#tray .hint{color:#fff;font-size:.95rem;text-align:center;max-width:26rem;line-height:1.25}
+.btn{font:400 1.45rem Bangers;letter-spacing:.06em;background:var(--red);color:#fff;border:.2rem solid var(--ink);border-radius:.6rem;padding:.2rem 1.2rem;box-shadow:.22rem .22rem 0 var(--ink);text-shadow:.07rem .07rem 0 var(--ink);white-space:nowrap}
+.btn:hover:not(:disabled){transform:translate(-.05rem,-.05rem);box-shadow:.3rem .3rem 0 var(--ink)}
+.btn:active:not(:disabled){transform:translate(.15rem,.15rem);box-shadow:.05rem .05rem 0 var(--ink)}
+.btn:disabled{background:#6b6488;color:#cfc9e6;box-shadow:.12rem .12rem 0 var(--ink);cursor:not-allowed;text-shadow:none}
+.btn.y{background:var(--yellow);color:var(--ink);text-shadow:none}
+
+/* landscape: a big board on the left; the step, its cards and the options on the right */
+@media (min-aspect-ratio:11/10) and (min-width:640px){
+  #stage{display:grid;grid-template-columns:minmax(0,1fr) clamp(15rem,29%,23rem);gap:.7rem;padding:.5rem calc(var(--ix) + .5rem) .55rem}
+  #board{grid-column:1;grid-row:1}
+  #side{display:flex;flex-direction:column;gap:.5rem;grid-column:2;grid-row:1;min-height:0}
+  #cap{transform:rotate(-.3deg)}
+  #tray{flex:1;height:auto;min-height:0;flex-direction:column;align-items:stretch;justify-content:flex-start;overflow-x:hidden;overflow-y:auto;padding:.2rem .5rem .6rem .15rem;gap:.55rem}
+  #tray .card{width:100%;flex:none}
+  #tray .card .t{font-size:1rem}
+  #tray .card .d{font-size:.8rem}
+  #tray.help{justify-content:center;align-items:stretch;gap:.8rem;text-align:center}
+  #tray .hint{max-width:none;font-size:1.05rem;font-weight:800;background:#0003;border-radius:.6rem;padding:.5rem .7rem}
+  #tray .btn{width:100%;font-size:1.6rem}
+  #tray.chips{max-height:none;padding:.2rem .4rem .6rem 0;gap:.55rem}
+  .crow{flex-direction:column;align-items:stretch;gap:.15rem}
+  .crow>b{width:auto}
+  #tray.chips .btn{align-self:stretch!important}
+  #toast{top:auto;bottom:1.2rem;left:calc(var(--ix) + .5rem + 25%)}
+}
+html.embed .bw{box-shadow:0 0 0 .18rem var(--ink),0 .4rem 1.2rem #000a}
+
+/* the hand tutorial */
+#hand{position:fixed;left:0;top:0;z-index:100;pointer-events:none;opacity:0;width:3.4rem;height:4.5rem;transition:opacity .25s}
+#hand.on{opacity:1}
+#hand svg{display:block;width:3.4rem;height:4.5rem;margin:-.21rem 0 0 -1.25rem;filter:drop-shadow(.15rem .25rem 0 #0006);transition:transform .18s;transform-origin:1.25rem .2rem}
+#hand.press svg{transform:scale(.82)}
+#bub{position:absolute;left:2rem;top:1.6rem;white-space:nowrap;background:var(--ink);color:var(--yellow);font:400 1.15rem Bangers;letter-spacing:.06em;padding:.2rem .8rem;border-radius:.6rem;border:.15rem solid var(--yellow);box-shadow:.15rem .2rem 0 #0006;opacity:0;transition:opacity .2s}
+#hand.msg #bub{opacity:1}
+#hand.flip #bub{left:auto;right:1.2rem}
+#hand.up #bub{top:-2.6rem}
+#carry{position:absolute;left:-1.6rem;top:.3rem;width:3.2rem;height:2.2rem;border-radius:.3rem;border:.14rem solid var(--ink);background:var(--paper);box-shadow:.12rem .14rem 0 #0006;opacity:0;transform:rotate(-6deg);transition:opacity .15s;overflow:hidden}
+#carry::before{content:"";display:block;height:.7rem;background:var(--cc,#7a3cff);border-bottom:.12rem solid var(--ink)}
+#carry.on{opacity:1}
+#ring{position:fixed;left:0;top:0;z-index:99;pointer-events:none;width:3.6rem;height:3.6rem;border-radius:50%;border:.3rem solid var(--yellow);box-shadow:0 0 1rem var(--yellow);opacity:0}
+.gest{display:flex;gap:.7rem;margin:.5rem 0 .2rem}
+.gest div{flex:1;display:flex;gap:.5rem;align-items:center;background:#fff;border:.15rem solid var(--ink);border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;line-height:1.2;color:#3b2f58;font-weight:800}
+.gest svg{flex:none;width:1.6rem;height:2.1rem}
+.gest b{display:block;font:400 1rem Bangers;letter-spacing:.06em;color:var(--red)}
+
+/* chips (hypothesis builder) */
+#tray.chips{flex-direction:column;align-items:stretch;gap:.3rem;height:auto;max-height:11rem;overflow-y:auto;padding:.3rem .4rem}
+.crow{display:flex;gap:.4rem;align-items:center}
+.crow>b{flex:none;width:5.2rem;font:400 .95rem Bangers;letter-spacing:.06em;color:var(--yellow);text-shadow:.06rem .06rem 0 var(--ink)}
+.crow .cs{flex:1;display:flex;gap:.35rem;flex-wrap:wrap}
+.chip{background:var(--paper);border:.15rem solid var(--ink);border-radius:999px;padding:.12rem .7rem;font-size:.82rem;font-weight:800;box-shadow:.1rem .1rem 0 var(--ink)}
+.chip.sel{background:var(--yellow);box-shadow:.1rem .1rem 0 var(--red);outline:.15rem solid var(--red)}
+
+/* ---------- panels: brief, scoring cards, jury ---------- */
+#panel{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:.8rem calc(var(--ix) + .8rem);background:rgba(18,12,54,.86);backdrop-filter:blur(3px)}
+#panel.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.sheet{width:min(46rem,100%);max-height:100%;overflow:auto;background:var(--paper);border:.25rem solid var(--ink);border-radius:.7rem;box-shadow:.4rem .4rem 0 var(--ink);padding:.9rem 1.1rem 1rem;transform:rotate(-.3deg)}
+.sheet h2{font-size:2.1rem;line-height:1;color:var(--red);text-shadow:.1rem .1rem 0 var(--ink)}
+.sheet h2 small{display:block;font:800 .8rem Nunito;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-shadow:none;margin-bottom:.25rem}
+.sheet p{margin:.5rem 0;font-size:.95rem;line-height:1.35;color:#3b2f58;font-weight:700}
+.sheet .row{display:flex;gap:.7rem;justify-content:flex-end;margin-top:.8rem;flex-wrap:wrap}
+.brief .cc{display:flex;gap:.8rem;margin:.6rem 0;align-items:stretch}
+.brief .car{flex:none;width:7.6rem;border-radius:.5rem;border:.18rem solid var(--ink);background:linear-gradient(135deg,#e8374c,#a3121f);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.2rem;padding:.4rem;text-align:center;box-shadow:.14rem .14rem 0 var(--ink)}
+.brief .car b{font:400 1.7rem Bangers;letter-spacing:.06em}
+.brief .car span{font-size:.7rem}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;margin:.4rem 0}
+.steps div{font-size:.98rem;line-height:1.2;color:var(--ink);font-weight:900}
+.steps b{display:inline-block;min-width:1.6rem;background:var(--ink);color:var(--yellow);font:400 1.1rem Bangers;text-align:center;border-radius:.25rem;margin-right:.35rem}
+.recap{display:grid;gap:.4rem;margin:.5rem 0}
+.recap div{background:#fff;border:.15rem solid var(--ink);border-radius:.45rem;padding:.35rem .6rem;font-size:.85rem;line-height:1.25;color:#3b2f58}
+.recap b{display:block;font:400 .95rem Bangers;letter-spacing:.06em;color:var(--red)}
+.tot{display:flex;justify-content:space-between;align-items:center;font:400 1.5rem Bangers;letter-spacing:.05em;margin-top:.4rem}
+.tot span:last-child{color:var(--red);font-size:2rem}
+.rank{font:400 1.2rem Bangers;letter-spacing:.06em;background:var(--yellow);border:.18rem solid var(--ink);border-radius:.5rem;padding:.1rem .7rem;display:inline-block;transform:rotate(-2deg)}
+
+/* the real scoring card: tap a dot for each criterion */
+.sw{display:flex;flex-direction:column;align-items:center;gap:.5rem;width:100%;max-height:100%}
+.sw .ttl{font:400 1.5rem Bangers;letter-spacing:.06em;color:var(--yellow);text-shadow:.1rem .1rem 0 var(--ink);text-align:center}
+.sw .ttl small{display:block;font:800 .8rem Nunito;letter-spacing:.06em;color:#fff;text-shadow:none}
+.sc{position:relative;width:min(100%,calc((100vh - 9.5rem) * var(--ar)));aspect-ratio:var(--ar);container-type:inline-size;border-radius:.5rem;box-shadow:0 0 0 .22rem var(--ink),0 .6rem 1.6rem #000a;background:#fff}
+.sc>svg{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:.5rem;pointer-events:none}
+.dot{position:absolute;width:4.4cqw;height:4.4cqw;margin:-2.2cqw 0 0 -2.2cqw;border-radius:50%;padding:0;transition:.15s}
+.dot:hover{box-shadow:0 0 0 .2rem var(--yellow)}
+.dot::after{content:"";position:absolute;inset:22%;border-radius:50%;background:var(--navy);transform:scale(0);transition:transform .2s}
+.dot.sel::after{transform:scale(1)}
+.dot.sel{box-shadow:0 0 0 .2rem var(--yellow)}
+.dot.ov{pointer-events:none}.dot.ov.sel::after{background:#f2a900}
+.dot.ov.sel{box-shadow:0 0 0 .25rem var(--yellow)}
+.scn{position:absolute;transform:translate(-50%,-50%);font:400 3.6cqw Bangers;letter-spacing:.04em;color:var(--navy);text-align:center;white-space:nowrap}
+.scn.big{font-size:3.7cqw;color:var(--red)}
+.sct{position:absolute;font-size:1.15cqw;line-height:1.12;color:var(--navy);font-weight:800;overflow:hidden}
+.sw .foot{display:flex;gap:.8rem;align-items:center;justify-content:center;flex-wrap:wrap}
+.sw .foot span{color:#fff;font-size:.85rem;max-width:26rem;text-align:center}
+
+#toast{position:absolute;left:50%;top:5.2rem;z-index:30;transform:translate(-50%,-1rem);opacity:0;background:var(--ink);color:var(--yellow);padding:.35rem 1rem;border-radius:.5rem;border:.15rem solid var(--yellow);font:400 1.15rem Bangers;letter-spacing:.05em;transition:.3s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- hero / attract screen (also the background world on the handheld) ---------- */
+#hero{position:fixed;inset:0;z-index:50;display:none;overflow:hidden;background:
+  repeating-conic-gradient(from 0deg at 50% 62%,#ffd21f 0 7deg,#ffbf00 7deg 14deg)}
+#hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 1px 1px,rgba(120,60,0,.18) 1.4px,transparent 1.8px) 0 0/12px 12px}
+#hero::after{content:"";position:absolute;inset:0;background:radial-gradient(70% 70% at 50% 60%,transparent 40%,rgba(120,40,0,.28))}
+html.bgonly #hero{display:block}
+html.bgonly #app,html.bgonly #panel{display:none!important}
+.hero-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:12.5vh;gap:.3rem;z-index:2;padding-left:calc(var(--ix) + 1rem);padding-right:calc(var(--ix) + 1rem)}
+.logo-big{font:400 clamp(3rem,min(11vh,14vw),8rem) Bangers;line-height:.9;letter-spacing:.04em;color:var(--yellow);-webkit-text-stroke:.07em #1b1650;paint-order:stroke fill;text-shadow:.05em .06em 0 #1b1650,.1em .12em 0 #e8374c;transform:rotate(-3deg);animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:rotate(-1.5deg) translateY(-.4rem)}}
+.tag{font:400 1.8rem Bangers;letter-spacing:.07em;background:var(--ink);color:#fff;padding:.1rem 1.1rem;border-radius:.4rem;transform:rotate(1.5deg);border:.18rem solid #fff}
+html.embed .tag{display:none}
+.fan{position:absolute;inset:0;z-index:1;pointer-events:none}
+.fan i{position:absolute;width:6.4rem;height:8.6rem;border-radius:.6rem;border:.2rem solid var(--ink);box-shadow:.25rem .3rem 0 #0004;background:var(--c);animation:fl var(--t) ease-in-out infinite;transform:rotate(var(--r))}
+.fan i::before{content:"";position:absolute;left:.5rem;right:.5rem;top:.5rem;height:3.2rem;border-radius:.3rem;background:#fff9}
+.fan i::after{content:"";position:absolute;left:.5rem;right:1.6rem;bottom:.9rem;height:.5rem;border-radius:.3rem;background:#fff9;box-shadow:0 -.9rem 0 #fff7}
+@keyframes fl{50%{transform:translateY(-.8rem) rotate(calc(var(--r) + 4deg))}}
+.bolt{position:absolute;z-index:1;width:5rem;filter:drop-shadow(.15rem .2rem 0 #1b1650)}
+</style>
+</head>
+<body>
+
+<div id="hero"><div class="fan" id="fan"></div>
+  <svg class="bolt" style="left:12%;top:12%;transform:rotate(-12deg)" viewBox="0 0 40 60"><path d="M24 0 4 34h13L10 60 36 22H22z" fill="#ffd21f" stroke="#1b1650" stroke-width="3" stroke-linejoin="round"/></svg>
+  <svg class="bolt" style="right:11%;bottom:14%;transform:rotate(14deg) scale(.8)" viewBox="0 0 40 60"><path d="M24 0 4 34h13L10 60 36 22H22z" fill="#ffd21f" stroke="#1b1650" stroke-width="3" stroke-linejoin="round"/></svg>
+  <div class="hero-in"><div class="logo-big">Unbox</div><div class="tag">A BUSINESS THINKING GAME</div></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="hand-ico" viewBox="0 0 64 84">
+    <g stroke="#1a1030" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" fill="#ffe2c2">
+      <rect x="16" y="4" width="15" height="48" rx="7.5"/>
+      <rect x="14" y="36" width="44" height="40" rx="15"/>
+      <rect x="18.2" y="38" width="10.6" height="14" fill="#ffe2c2" stroke="none"/>
+      <path d="M33 41v11M43 41v11" fill="none" stroke-width="3"/>
+      <rect x="15" y="70" width="40" height="12" rx="3" fill="#ffd21f"/>
+    </g></symbol></defs></svg>
+<div id="hand" aria-hidden="true"><div id="carry"></div><svg viewBox="0 0 64 84"><use href="#hand-ico"/></svg><div id="bub"></div></div>
+<div id="ring" aria-hidden="true"></div>
+
+<div id="app">
+  <header id="hud"><div class="logo">UNBOX</div><div id="pips"></div><button id="modeBtn" type="button" title="Switch between playing and watching">&#8644; MODES</button><button id="introBtn" type="button" title="How Unbox works">? HOW IT WORKS</button><div id="score">0 PTS</div></header>
+  <section id="stage">
+    <div id="board"></div>
+    <aside id="side">
+      <div id="cap">
+        <div class="hd"><span class="no">STEP 1</span><span class="of"></span><button id="how" type="button" aria-label="Show me how to play this step">&#9995; SHOW ME</button></div>
+        <div class="ttl"></div>
+        <div class="tx"></div>
+        <div id="rail"></div>
+      </div>
+      <div id="tray"></div>
+    </aside>
+    <div id="toast"></div>
+  </section>
+  <div id="panel"></div>
+</div>
+<div id="modes" role="dialog" aria-label="Choose how to explore Unbox">
+  <div class="mt">UNBOX</div>
+  <button class="m play" type="button" id="modePlay"><i>&#9654;</i><h3>PLAY</h3><p>Play the board game: two boards, twelve steps, real tactic cards.</p></button>
+  <button class="m see" type="button" id="modeSee"><i>&#9673;</i><h3>SEE</h3><p>Watch the whole project as a short motion film. It plays by itself.</p></button>
+</div>
+
+<script src="art.js"></script>
+<script src="intro.js"></script>
+<script src="see/see.js"></script>
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+/* ---------- the real boards: slot rectangles [x0, y0, x1, y1] in the pixels of the images taken from the design document ---------- */
+const B1 = { art: 'board1', W: 649, H: 457,
+  chal: [20, 55, 135, 177], prod: [20, 190, 135, 311], seg: [20, 325, 135, 446],
+  tac: { NET: [160, 63, 240, 149], SUP: [160, 153, 240, 241], PRO: [255, 51, 335, 135], STR: [255, 173, 335, 257], ECO: [354, 63, 433, 149],
+         CIR: [354, 153, 433, 241], ENG: [447, 51, 527, 135], CHA: [447, 173, 527, 257], SOC: [241, 278, 340, 361], REV: [342, 278, 441, 361] },
+  top: [[550, 62, 630, 140], [550, 176, 630, 261], [550, 297, 630, 382]], stm: [162, 394, 524, 449] };
+const B2 = { art: 'board2', W: 676, H: 451,
+  asm: { PAR: [30, 112, 114, 197], PRO: [130, 112, 215, 197], VAL: [231, 112, 315, 197], NEE: [329, 112, 414, 197],
+         ORG: [130, 224, 215, 295], PRB: [329, 224, 414, 295], WTP: [27, 332, 112, 407], REV: [227, 332, 312, 407] },
+  crit: [[443, 138, 525, 219], [443, 236, 525, 318]], exp: [545, 85, 661, 203], xyz: [545, 230, 661, 348] };
+const SC1 = { n: 1, W: 722, H: 511, cols: [253, 280, 307], rows: [[139, 172, 205], [268, 301, 335], [394, 427, 461]],
+  ox: [515, 544, 573], oy: [174, 302, 430], sx: 668, sy: [184, 316, 436], tot: [667, 494], txt: [388, 27, 596, 68] };
+const SC2 = { n: 2, W: 706, H: 500, cols: [246, 273, 299], rows: [[137, 170, 202], [263, 296, 329], [387, 420, 453]],
+  ox: [503, 531, 560], oy: [171, 297, 423], sx: 652, sy: [178, 311, 426], tot: [652, 488], txt: [366, 27, 583, 68] };
+
+/* ---------- content: the Tesla-in-India challenge from the "How to play" pages (cards beyond the document's examples are samples) ---------- */
+const SEG = [
+  { id: 'eco', t: 'Eco-Conscious Enthusiast', s: 'eco-conscious urban buyers', tag: 'PERSONA 1', c: '#2fb870', d: 'Age 25–35, urban, mid to high income. Needs greener transport. Worries: few EVs, range and charging.' },
+  { id: 'tech', t: 'Tech-Forward Early Adopter', s: 'tech-forward early adopters', tag: 'PERSONA 2', c: '#2d8cff', d: 'Loves new tech and being first. Worries: service network and software support.' },
+  { id: 'fleet', t: 'Fleet & Business Buyer', s: 'fleet and business buyers', tag: 'PERSONA 3', c: '#ff7b2c', d: 'Buys for a company. Wants lower running costs. Worries: upfront price.' } ];
+const PROD = [
+  { id: 'lr', t: 'Model X Long Range', s: 'the Model X Long Range', tag: 'PRODUCT', c: '#7a3cff', d: 'All-electric SUV, falcon-wing doors, up to 360 miles of range, versatile seating.' },
+  { id: 'pl', t: 'Model X Plaid', s: 'the Model X Plaid', tag: 'PRODUCT', c: '#e8374c', d: '0–60 mph in under 2.5 s and up to 340 miles of range.' },
+  { id: 'fe', t: 'Model X Fleet Edition', s: 'a Model X Fleet Edition', tag: 'PRODUCT', c: '#14a3ad', d: 'Sample card: a work-ready build for company and taxi fleets.' } ];
+const CHAL = [
+  { id: 'c1', t: 'Win India’s urban early adopters', s: 'win over India’s urban early adopters', tag: 'CHALLENGE', c: '#e8374c', d: 'How might Tesla win city early adopters despite import duties and thin charging?' },
+  { id: 'c2', t: 'Make an EV feel affordable', s: 'make an EV feel affordable and safe for families', tag: 'CHALLENGE', c: '#7a3cff', d: 'How might Tesla make owning an EV feel affordable and safe for Indian families?' },
+  { id: 'c3', t: 'Build trust beyond the metros', s: 'build trust and service reach beyond the metros', tag: 'CHALLENGE', c: '#14a3ad', d: 'How might Tesla earn trust and service reach outside the big cities?' } ];
+// the ten tactic zones of the real board
+const TAC = [
+  ['NET', 'NETWORK TACTIC', '#3f9fc9', 'Power partners', 'Team up with utilities and parking operators.'],
+  ['SUP', 'SUPPLY CHAIN TACTIC', '#3d6fb0', 'Local assembly', 'Assemble in India to cut import duties.'],
+  ['PRO', 'PROCESS TACTIC', '#e0336b', 'Online ordering', 'Order, finance and track delivery online.'],
+  ['STR', 'STRUCTURE TACTIC', '#e8604c', 'India business unit', 'A local team that decides fast.'],
+  ['ECO', 'ECO DESIGN TACTIC', '#14a899', 'Eco by design', 'Recycled materials and top efficiency.'],
+  ['CIR', 'CIRCULAR MATERIAL & ENERGY', '#2fb870', 'Battery second life', 'Reuse and recycle old batteries.'],
+  ['ENG', 'ENGAGEMENT TACTIC', '#4a6fe0', 'Owner community', 'Clubs, an app and a shared charger map.'],
+  ['CHA', 'CHANNEL TACTIC', '#f2a31b', 'Experience hubs', 'Pop-up showrooms in malls and tech parks.'],
+  ['SOC', 'SOCIAL MISSION TACTIC', '#c9a400', 'Clean-air pledge', 'Fund charging in under-served towns.'],
+  ['REV', 'REVENUE TACTIC', '#9b3fc4', 'Monthly subscription', 'Pay monthly instead of buying outright.'] ]
+  .map(([id, tag, c, t, d]) => ({ id, block: id, tag, c, t, d }));
+const TACNAME = Object.fromEntries(TAC.map(x => [x.id, x.tag.replace(' TACTIC', '').toLowerCase()]));
+// the eight assumption zones of the real board
+const ASM = [
+  ['PAR', 'PARTNER ASSUMPTION', '#3f9fc9', 'Utilities will let us install chargers fast.'],
+  ['PRO', 'PROCESS ASSUMPTION', '#e0336b', 'We can assemble locally within two years.'],
+  ['VAL', 'VALUE PROPOSITION ASSUMPTION', '#7a3cff', 'Buyers care about eco credentials, not just price.'],
+  ['NEE', 'CUSTOMER NEED ASSUMPTION', '#2d8cff', 'City drivers really want a premium EV.'],
+  ['ORG', 'ORGANISATION ASSUMPTION', '#e8604c', 'Our team can run service across many cities.'],
+  ['PRB', 'CUSTOMER PROBLEM ASSUMPTION', '#14a899', 'Charging worry is what stops people buying.'],
+  ['WTP', 'WILLINGNESS TO PAY', '#ff7b2c', 'People will pay a premium for an imported EV.'],
+  ['REV', 'REVENUE ASSUMPTION', '#2fb870', 'A monthly plan will bring in steady revenue.'] ]
+  .map(([id, tag, c, t]) => ({ id: 'a' + id, block: id, tag, c, t, d: '' }));
+const EXP = [
+  { id: 'e1', t: 'Landing page test', d: 'Risk: low · Evidence: medium. Test interest with a page and a sign-up.' },
+  { id: 'e2', t: 'Concierge MVP', d: 'Risk: low · Evidence: strong. Deliver the service by hand to a few people.' },
+  { id: 'e3', t: 'Fake door test', d: 'Risk: low · Evidence: medium. Offer a feature that is not built yet and count clicks.' },
+  { id: 'e4', t: 'A/B testing', d: 'Risk: medium · Evidence: strong. Compare two versions with real users.' },
+  { id: 'e5', t: 'Surveys & interviews', d: 'Risk: low · Evidence: weak to medium. Ask customers directly.' } ]
+  .map((x, i) => ({ ...x, tag: 'EXPERIMENT', c: ['#2d8cff', '#7a3cff', '#e8374c', '#14a3ad', '#ff7b2c'][i] }));
+const HX = ['eco-minded city professionals', 'tech-forward early adopters', 'fleet and business buyers'];
+const HY = ['book a test drive online', 'pay a refundable deposit', 'subscribe monthly'];
+const HZ = ['charging will feel easy', 'it lowers running costs', 'it matches their values'];
+
+/* ---------- state + ui helpers ---------- */
+let S, stepI = 0, busy = false;
+const cap = $('#cap'), board = $('#board'), tray = $('#tray'), panel = $('#panel');
+const reset = () => { S = { seg: null, prod: null, chal: null, tacs: {}, top: [], stm: '', p1: 0, p2: 0, asm: {}, crit: [], hx: [null, null, null], hyp: '', exp: null }; };
+reset();
+let toastT; const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1700); };
+const setScore = () => { $('#score').textContent = (S.p1 + S.p2) + ' PTS'; };
+const TITLES = ['Challenge card', 'Customer segment', 'Product', 'Challenge statement', 'Tactics', 'Top 3: secret sauce', 'Strategy statement', 'Score board 1', 'Assumptions', 'Most critical', 'XYZ hypothesis', 'Experiment', 'Score board 2', 'The jury'];
+const RANGES = [null, [1, 7], [8, 12], null];                           // the steps of board 1 and board 2 (the last of each is the scoring card)
+function setCap(st, i) {
+  const r = i >= 1 && i <= 7 ? RANGES[1] : i >= 8 && i <= 12 ? RANGES[2] : null;
+  cap.querySelector('.no').textContent = st.no; cap.querySelector('.ttl').textContent = TITLES[i] || ''; cap.querySelector('.tx').innerHTML = st.text;
+  cap.querySelector('.of').textContent = r ? (i === r[1] ? 'last step' : `of ${r[1] - r[0]}`) : '';
+  const rail = $('#rail'); rail.replaceChildren();
+  if (r) for (let k = r[0]; k <= r[1]; k++) { const b = el('i', k < i ? 'done' : k === i ? 'on' : '', k === r[1] ? '★' : k - r[0] + 1); b.title = TITLES[k]; rail.append(b); }
+  $('#how').hidden = !st.demo;
+  cap.classList.remove('pop'); void cap.offsetWidth; cap.classList.add('pop');
+}
+function setPips() {
+  const p = $('#pips'); p.replaceChildren();
+  for (let i = 0; i < 12; i++) {
+    if (i === 0) p.append(el('b', '', 'BOARD 1')); if (i === 7) p.append(el('b', '', 'BOARD 2'));
+    p.append(el('i', i < stepI - 1 ? 'done' : i === stepI - 1 ? 'on' : ''));
+  }
+}
+const card = (c, withRank) => {
+  const e = el('div', 'card', `<div class="tg">${c.tag}</div><div class="t">${c.t}</div><div class="d">${c.d || ''}</div>${withRank ? '<span class="rk"></span>' : ''}`);
+  e.style.setProperty('--c', c.c); e.dataset.id = c.id; e.dataObj = c; if (c.d) e.title = c.d; return e;
+};
+// a board: the image, plus one invisible slot per rectangle
+let bw = null;
+function buildBoard(B) {
+  board.replaceChildren(); bw = el('div', 'bw'); bw.style.setProperty('--ar', B.W + '/' + B.H); bw.B = B;
+  bw.insertAdjacentHTML('afterbegin', UNBOX_ART[B.art]()); board.append(bw); return bw;
+}
+function slot(r, accept, extra) {
+  const B = bw.B, s = el('div', 'slot'); s.dataset.accept = accept; if (extra) Object.assign(s.dataset, extra);
+  s.style.cssText = `left:${(r[0] / B.W * 100).toFixed(2)}%;top:${(r[1] / B.H * 100).toFixed(2)}%;width:${((r[2] - r[0]) / B.W * 100).toFixed(2)}%;height:${((r[3] - r[1]) / B.H * 100).toFixed(2)}%`;
+  bw.append(s); return s;
+}
+const focus = (...sel) => { $$('.slot', bw).forEach(s => s.classList.remove('focus')); sel.forEach(q => $$(q, bw).forEach(s => !s.classList.contains('has') && s.classList.add('focus'))); };
+function showTray(cards, kind) {
+  tray.className = ''; tray.replaceChildren();
+  cards.forEach(c => { const e = card(c); e.dataset.kind = kind; wire(e); tray.append(e); });
+}
+function help(text, btn) {
+  tray.className = 'help'; tray.replaceChildren(); if (text) tray.append(el('div', 'hint', text));
+  if (btn) { const b = el('button', 'btn', btn.t); b.disabled = !!btn.off; b.onclick = () => { if (!busy) btn.fn(); }; tray.append(b); return b; }
+}
+const next = (ms = 800) => { if (busy) return; busy = true; setTimeout(() => { busy = false; go(stepI + 1); }, ms); };
+
+/* ---------- drag / tap to place ---------- */
+function wire(e) {
+  e.addEventListener('pointerdown', ev => {
+    if (busy || e.closest('.slot')) return;
+    const sx = ev.clientX, sy = ev.clientY, r = e.getBoundingClientRect(), ox = ev.clientX - r.left, oy = ev.clientY - r.top; let ghost = null;
+    e.setPointerCapture(ev.pointerId);
+    const mv = m => {
+      if (!ghost && Math.hypot(m.clientX - sx, m.clientY - sy) > 6) {
+        ghost = e.cloneNode(true); ghost.classList.add('ghost'); ghost.style.width = r.width + 'px'; ghost.style.height = r.height + 'px'; document.body.append(ghost);
+        e.classList.add('lift'); mark(e, true);
+      }
+      if (ghost) ghost.style.transform = `translate(${m.clientX - ox}px,${m.clientY - oy}px) rotate(3deg)`;
+    };
+    const up = u => {
+      e.removeEventListener('pointermove', mv); e.removeEventListener('pointerup', up); e.removeEventListener('pointercancel', up);
+      mark(e, false); e.classList.remove('lift');
+      let tgt = null; if (ghost) { ghost.style.display = 'none'; const t = document.elementFromPoint(u.clientX, u.clientY); tgt = t && t.closest('.slot'); ghost.remove(); }
+      place(e, tgt);
+    };
+    e.addEventListener('pointermove', mv); e.addEventListener('pointerup', up); e.addEventListener('pointercancel', up);
+  });
+}
+const fits = (s, c) => s.dataset.accept === c.dataset.kind && !s.classList.contains('has') && (!s.dataset.block || s.dataset.block === c.dataObj.block);
+const mark = (c, on) => $$('.slot', bw).forEach(s => s.classList.toggle('ok', on && fits(s, c)));
+function place(c, s) {
+  if (!s) s = $$('.slot', bw).find(x => fits(x, c));                    // a plain tap: it flies to its own slot
+  if (!s) return;
+  if (!fits(s, c)) {
+    s.classList.remove('bad'); void s.offsetWidth; s.classList.add('bad');
+    if (s.dataset.block && !s.classList.contains('has')) toast('That one belongs to ' + (TACNAME[c.dataObj.block] || 'another zone'));
+    return;
+  }
+  c.classList.add('fresh'); s.append(c); s.classList.add('has'); s.classList.remove('focus');
+  steps[stepI].placed && steps[stepI].placed(c.dataObj, s);
+}
+
+/* ---------- boards ---------- */
+function board1() {
+  buildBoard(B1); const B = B1;
+  slot(B.chal, 'chal', { k: 'chal' }); slot(B.prod, 'prod', { k: 'prod' }); slot(B.seg, 'seg', { k: 'seg' });
+  Object.entries(B.tac).forEach(([k, r]) => slot(r, 'tac', { block: k, k: 'tac' }));
+  B.top.forEach((r, i) => slot(r, 'none', { k: 'top' + i })); slot(B.stm, 'none', { k: 'stm' });
+}
+function board2() {
+  buildBoard(B2); const B = B2;
+  Object.entries(B.asm).forEach(([k, r]) => slot(r, 'asm', { block: k, k: 'asm' }));
+  B.crit.forEach((r, i) => slot(r, 'none', { k: 'crit' + i })); slot(B.exp, 'exp', { k: 'exp' }); slot(B.xyz, 'none', { k: 'xyz' });
+}
+const slotOf = k => $(`.slot[data-k="${k}"]`, bw);
+
+/* ---------- steps ---------- */
+const steps = [];
+function pickRow(selector, max, onChange) {                           // tap stickers that already sit on the board
+  bw.classList.add('pickable'); const cs = $$(selector, bw); let chosen = [];
+  cs.forEach(c => { c.querySelector('.rk') || c.insertAdjacentHTML('beforeend', '<span class="rk"></span>');
+    c.onclick = () => { const i = chosen.indexOf(c); if (i >= 0) chosen.splice(i, 1); else if (chosen.length < max) chosen.push(c); else return toast('Only ' + max + ' allowed. Tap one to swap it out');
+      cs.forEach(x => { x.classList.toggle('sel', chosen.includes(x)); x.querySelector('.rk').textContent = chosen.indexOf(x) + 1; }); onChange(chosen); }; });
+}
+const unpick = selector => { bw.classList.remove('pickable'); $$(selector, bw).forEach(c => { c.onclick = null; c.classList.remove('sel'); }); };
+const stickerIn = (s, tag, color, text) => { s.classList.toggle('has', !!text); s.innerHTML = text ? `<div class="card" style="--c:${color}"><div class="tg">${tag}</div><div class="t">${text}</div></div>` : ''; };
+
+// BOARD 1
+steps.push({ no: 'BRIEF', brief: true, text: '<b>Meet Unbox</b>, then read your challenge card.' });
+steps.push({ demo: 'drag', no: 'STEP 1', text: '<b>Pick a customer</b> from the deck. <b>Drag</b> the card to the glowing zone, or just <b>tap</b> it.', enter() {
+  board1(); focus('[data-k=seg]'); showTray(SEG, 'seg'); }, placed(c) { S.seg = c; next(); } });
+steps.push({ demo: 'drag', no: 'STEP 2', text: '<b>Pick a product</b> that fits that customer. It becomes your value proposition.', enter() {
+  focus('[data-k=prod]'); showTray(PROD, 'prod'); }, placed(c) { S.prod = c; next(); } });
+steps.push({ demo: 'drag', no: 'STEP 3', text: '<b>Pick a challenge statement</b> from the deck.', enter() {
+  focus('[data-k=chal]'); showTray(CHAL, 'chal'); }, placed(c) { S.chal = c; next(); } });
+steps.push({ demo: 'drag', no: 'STEP 4', text: '<b>Place a tactic in every zone.</b> The board names each zone: put each card where it belongs.', enter() {
+  focus('[data-k=tac]'); showTray(TAC, 'tac'); }, placed(c) { S.tacs[c.id] = c; if (Object.keys(S.tacs).length === TAC.length) { toast('Every zone filled!'); next(1000); } } });
+steps.push({ demo: 'pick', no: 'STEP 5', text: '<b>Tap your top 3 tactics</b> on the board. They are your secret sauce.', enter() {
+  focus('[data-k^=top]'); let chosen = [];
+  const lock = help('Tap <b>three</b> tactics on the board. Their order is the order of your sentence.', { t: 'LOCK IT IN ▶', off: true, fn: () => { S.top = chosen.map(c => c.dataObj); next(300); } });
+  pickRow('.slot[data-k=tac] .card', 3, ch => { chosen = ch; lock.disabled = ch.length !== 3;
+    [0, 1, 2].forEach(i => stickerIn(slotOf('top' + i), 'TOP ' + (i + 1), ch[i] ? ch[i].dataObj.c : '#000', ch[i] && ch[i].dataObj.t)); focus('[data-k^=top]'); }); } });
+steps.push({ demo: 'btn', no: 'STEP 6', text: '<b>Write your strategy</b> as one sentence and paste it on the board.', enter() {
+  unpick('.slot[data-k=tac] .card'); focus('[data-k=stm]');
+  const [a, b, c] = S.top.map(x => x.t.toLowerCase());
+  S.stm = `For ${S.seg.s}, we will lead with <b>${S.prod.s}</b> and win through <b>${a}</b>, <b>${b}</b> and <b>${c}</b>, so that we can ${S.chal.s}.`;
+  help('Your secret sauce is ready. Press to write it up.', { t: 'PASTE ON BOARD ✎', fn: () => {
+    const s = slotOf('stm'); s.classList.add('has'); s.classList.remove('focus'); s.innerHTML = `<div class="note wide"><span>${S.stm}</span></div>`; next(1500); } }); } });
+steps.push({ demo: 'dot', no: 'SCORE', text: '<b>Rate your strategy.</b> Tap one dot (Low, Med or High) for every question.', enter() {
+  focus(); scoreCard(SC1, 'BOARD 1 · STRATEGY SCORING', S.stm, t => { S.p1 = t; setScore(); }, 'ON TO BOARD 2 ▶'); } });
+
+// BOARD 2
+steps.push({ demo: 'drag', no: 'STEP 1', text: '<b>Place an assumption in every zone.</b> These are the things that could defeat your strategy.', enter() {
+  board2(); focus('[data-k=asm]'); showTray(ASM, 'asm'); toast('BOARD 2: TEST IT'); }, placed(c) { S.asm[c.id] = c; if (Object.keys(S.asm).length === ASM.length) { toast('All assumptions on the table!'); next(1000); } } });
+steps.push({ demo: 'pick', no: 'STEP 2', text: '<b>Tap the most critical</b> assumption to test (one or two).', enter() {
+  focus('[data-k^=crit]'); let ch = [];
+  const lock = help('Tap the assumption that matters most.', { t: 'THESE ▶', off: true, fn: () => { S.crit = ch.map(c => c.dataObj); next(300); } });
+  pickRow('.slot[data-k=asm] .card', 2, c => { ch = c; lock.disabled = !c.length;
+    [0, 1].forEach(i => stickerIn(slotOf('crit' + i), c[i] ? c[i].dataObj.tag.split(' ASSUMPTION')[0] : '', c[i] ? c[i].dataObj.c : '#000', c[i] && c[i].dataObj.t)); focus('[data-k^=crit]'); }); } });
+steps.push({ demo: 'chip', no: 'STEP 3', text: '<b>Build your hypothesis:</b> “We believe that X will Y because Z.” Tap one option in each row.', enter() {
+  unpick('.slot[data-k=asm] .card'); focus('[data-k=xyz]'); S.hx = [null, null, null];
+  tray.className = 'chips'; tray.replaceChildren();
+  const rows = [['X USER', HX], ['Y BEHAVIOUR', HY], ['Z REASON', HZ]]; let lock; const xyz = slotOf('xyz');
+  const draw = () => { const f = (i, ph) => S.hx[i] ? `<b>${S.hx[i]}</b>` : `[${ph}]`;
+    xyz.classList.add('has'); xyz.innerHTML = `<div class="note"><span>We believe that ${f(0, 'X user')} will ${f(1, 'Y behavior')} because ${f(2, 'Z reason')}.</span></div>`; if (lock) lock.disabled = S.hx.includes(null); };
+  rows.forEach(([n, opts], i) => { const r = el('div', 'crow'); r.append(el('b', '', n)); const cs = el('div', 'cs');
+    opts.forEach(o => { const c = el('button', 'chip', o); c.onclick = () => { S.hx[i] = o; $$('.chip', cs).forEach(x => x.classList.toggle('sel', x === c)); draw(); }; cs.append(c); }); r.append(cs); tray.append(r); });
+  lock = el('button', 'btn', 'LOCK HYPOTHESIS ▶'); lock.disabled = true; lock.style.alignSelf = 'flex-end';
+  lock.onclick = () => { if (busy) return; S.hyp = `We believe that <b>${S.hx[0]}</b> will <b>${S.hx[1]}</b> because <b>${S.hx[2]}</b>.`; next(900); }; tray.append(lock); xyz.classList.remove('has'); xyz.innerHTML = ''; } });
+steps.push({ demo: 'drag', no: 'STEP 4', text: '<b>Pick an experiment</b> that best proves or disproves your hypothesis.', enter() {
+  focus('[data-k=exp]'); showTray(EXP, 'exp'); }, placed(c) { S.exp = c; next(); } });
+steps.push({ demo: 'dot', no: 'SCORE', text: '<b>Rate your test.</b> Tap one dot for every question. Points tell you what to change.', enter() {
+  focus(); scoreCard(SC2, 'BOARD 2 · EXPERIMENT SCORING', S.hyp, t => { S.p2 = t; setScore(); }, 'TO THE JURY ▶'); } });
+steps.push({ no: 'JURY', text: '<b>Defend your points</b> to the panel.', enter() { focus(); jury(); } });
+
+/* ---------- panels ---------- */
+function open(html, bare) { panel.innerHTML = bare ? html : `<div class="sheet">${html}</div>`; panel.classList.add('on'); return panel.firstElementChild; }
+function close() { panel.classList.remove('on'); panel.replaceChildren(); }
+function brief() { UNBOX_INTRO.open({ panel, label: 'START BOARD 1 \u25B6', onStart: () => { close(); go(stepI + 1); } }); }
+$('#introBtn').addEventListener('click', () => { if (panel.classList.contains('on')) return; stopDemo(); UNBOX_INTRO.open({ panel, label: 'BACK TO THE GAME \u25B6', skip: false, onStart: close }); });
+// the real scoring card: every criterion gets a Low / Med / High dot; each group's three ratings sum to an overall rating and points
+const LMH = ['Low', 'Med', 'High'];
+function scoreCard(C, title, text, done, nextLabel) {
+  const s = open(`<div class="sw"><div class="ttl">${title}<small>Tap a dot (Low / Med / High) for each question on the card</small></div><div class="sc" id="sc" style="--ar:${C.W}/${C.H}">${UNBOX_ART.score(C.n, C)}</div>
+    <div class="foot"><span>Overall rating turns into points: Low 0–10, Med 11–25, High 26–50. Be ready to defend them to a jury.</span><button class="btn" id="ok" disabled>${nextLabel}</button></div></div>`, true);
+  const sc = $('#sc', s), px = x => (x / C.W * 100).toFixed(2) + '%', py = y => (y / C.H * 100).toFixed(2) + '%';
+  const R = Array.from({ length: 3 }, () => [0, 0, 0]);                 // 1 / 2 / 3 per criterion
+  const dots = [], ovs = [], nums = [];
+  const t = el('div', 'sct'); t.innerHTML = text; t.style.cssText = `left:${px(C.txt[0])};top:${py(C.txt[1])};width:${px(C.txt[2] - C.txt[0])};height:${py(C.txt[3] - C.txt[1])}`; sc.append(t);
+  for (let g = 0; g < 3; g++) {
+    dots[g] = []; ovs[g] = [];
+    for (let r = 0; r < 3; r++) { dots[g][r] = [];
+      for (let c = 0; c < 3; c++) { const d = el('button', 'dot'); d.style.left = px(C.cols[c]); d.style.top = py(C.rows[g][r]); d.setAttribute('aria-label', `Question ${g * 3 + r + 1}: ${LMH[c]}`);
+        d.onclick = () => { R[g][r] = c + 1; dots[g][r].forEach((x, i) => x.classList.toggle('sel', i === c)); upd(); }; sc.append(d); dots[g][r].push(d); } }
+    for (let c = 0; c < 3; c++) { const o = el('span', 'dot ov'); o.style.left = px(C.ox[c]); o.style.top = py(C.oy[g]); sc.append(o); ovs[g].push(o); }
+    const n = el('div', 'scn'); n.style.left = px(C.sx); n.style.top = py(C.sy[g]); sc.append(n); nums.push(n);
+  }
+  const tn = el('div', 'scn big'); tn.style.left = px(C.tot[0]); tn.style.top = py(C.tot[1]); sc.append(tn);
+  const upd = () => {
+    let total = 0, all = true;
+    for (let g = 0; g < 3; g++) {
+      const full = R[g].every(Boolean); ovs[g].forEach(o => o.classList.remove('sel'));
+      if (!full) { nums[g].textContent = ''; all = false; continue; }
+      const sum = R[g][0] + R[g][1] + R[g][2], pts = Math.round((sum - 3) / 6 * 50), idx = pts <= 10 ? 0 : pts <= 25 ? 1 : 2;
+      ovs[g][idx].classList.add('sel'); nums[g].textContent = pts; total += pts;
+    }
+    tn.textContent = all ? total : ''; $('#ok', s).disabled = !all; upd.total = total;
+  };
+  $('#ok', s).onclick = () => { done(upd.total); close(); go(stepI + 1); };
+}
+function rank(t) { return t < 90 ? 'GARAGE DREAMER' : t < 180 ? 'RISING FOUNDER' : t < 240 ? 'STRATEGY CHAMP' : 'UNICORN MAKER'; }
+function jury() {
+  const t = S.p1 + S.p2, cr = S.crit.map(c => '“' + c.t + '”').join(' and ');
+  const s = open(`<h2><small>The jury room</small>Defend your points!</h2>
+    <p>A panel of collaborators, customers and possible investors is listening. Here is what your team brings to the table:</p>
+    <div class="recap"><div><b>STRATEGY STATEMENT</b>${S.stm}</div><div><b>HYPOTHESIS</b>${S.hyp}</div><div><b>EXPERIMENT</b>${S.exp.t}, your test of ${cr}</div></div>
+    <div class="tot"><span>TOTAL ${S.p1} + ${S.p2}</span><span>${t}</span></div>
+    <div style="text-align:right;margin-top:.3rem"><span class="rank">${rank(t)}</span></div>
+    <div class="row"><button class="btn y" id="again">PLAY AGAIN ↺</button></div>`);
+  $('#again', s).onclick = () => { close(); restart(); };
+}
+
+/* ---------- the hand tutorial: a hand drags or taps the way you should ---------- */
+const hand = $('#hand'), ringEl = $('#ring'), carry = $('#carry'), bub = $('#bub');
+let demoRun = 0; const seen = new Set();
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const ctr = e => { const r = e.getBoundingClientRect(); return [r.left + r.width * .5, r.top + r.height * .5]; };
+function ripple(x, y) { ringEl.style.left = x - ringEl.offsetWidth / 2 + 'px'; ringEl.style.top = y - ringEl.offsetHeight / 2 + 'px';
+  ringEl.animate([{ transform: 'scale(.3)', opacity: .95 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 560, easing: 'ease-out' }); }
+function stopDemo() { demoRun++; hand.classList.remove('on', 'press', 'msg'); carry.classList.remove('on'); }
+const say = t => { if (t) { bub.textContent = t; hand.classList.add('msg'); } else hand.classList.remove('msg'); };
+const to = (x, y, ms) => { hand.style.transition = `opacity .25s, transform ${ms}ms cubic-bezier(.45,0,.2,1)`; hand.style.transform = `translate(${x}px,${y}px)`; hand.classList.toggle('flip', x > innerWidth * .62); hand.classList.toggle('up', y > innerHeight * .72); return wait(ms); };
+const press = (on, x, y) => { hand.classList.toggle('press', on); if (on) ripple(x, y); };
+function visible(e) { if (!e) return null; e.scrollIntoView({ block: 'nearest', inline: 'nearest' }); const r = e.getBoundingClientRect(); return r.width && r.height ? e : null; }
+function targets(key) {
+  const first = q => visible($(q, document));
+  if (key === 'drag') { const c = first('#tray .card'), s = first('.slot.focus') || first('.slot:not(.has)'); return c && s ? { c, s } : null; }
+  if (key === 'pick') { const c = first('.pickable .slot .card'); return c ? { c } : null; }
+  if (key === 'btn') { const c = first('#go') || first('#tray .btn'); return c ? { c } : null; }
+  if (key === 'chip') { const c = first('.chip'); return c ? { c } : null; }
+  if (key === 'dot') { const c = $$('.sc .dot:not(.ov)')[1]; return c ? { c } : null; }
+}
+async function runDemo(key) {
+  const t = targets(key); if (!t) return; const id = ++demoRun, live = () => id === demoRun;
+  hand.classList.remove('press', 'msg'); carry.classList.remove('on');
+  const [cx, cy] = ctr(t.c); hand.style.transition = 'opacity .25s'; hand.style.transform = `translate(${cx + 30}px,${cy + 40}px)`; void hand.offsetWidth; hand.classList.add('on');
+  await wait(250); if (!live()) return;
+  const tap = async (x, y, msg) => { await to(x, y, 650); if (!live()) return; say(msg); await wait(250); press(true, x, y); await wait(260); press(false); await wait(380); press(true, x, y); await wait(260); press(false); await wait(900); };
+  if (key === 'drag') {
+    const [sx, sy] = ctr(t.s); carry.style.setProperty('--cc', getComputedStyle(t.c).getPropertyValue('--c') || '#7a3cff');
+    await to(cx, cy, 700); if (!live()) return; say('DRAG the card here'); await wait(300);
+    press(true, cx, cy); carry.classList.add('on'); await wait(280); if (!live()) return;
+    await to(sx, sy, 1100); if (!live()) return;
+    press(false); ripple(sx, sy); carry.classList.remove('on'); await wait(900); if (!live()) return;
+    say(''); await to(cx, cy, 700); if (!live()) return;
+    await tap(cx, cy, 'or just TAP it');
+  } else if (key === 'pick') { const [x, y] = ctr(t.c); await tap(x, y, 'TAP a card to pick it');
+  } else if (key === 'dot') { const [x, y] = ctr(t.c); await tap(x, y, 'TAP a dot: Low · Med · High');
+  } else if (key === 'chip') { const [x, y] = ctr(t.c); await tap(x, y, 'TAP one option per row');
+  } else { const [x, y] = ctr(t.c); await tap(x, y, 'PRESS to continue'); }
+  if (live()) stopDemo();
+}
+const autoDemo = st => { if (!st.demo || seen.has(st.demo) || document.documentElement.classList.contains('bgonly')) return; seen.add(st.demo); const n = demoRun; setTimeout(() => { if (n === demoRun) runDemo(st.demo); }, 900); };
+$('#how').addEventListener('click', ev => { ev.stopPropagation(); const st = steps[stepI]; if (st && st.demo) { stopDemo(); runDemo(st.demo); } });
+document.addEventListener('pointerdown', ev => { if (hand.classList.contains('on') && !ev.target.closest('#how')) stopDemo(); }, true);
+
+/* ---------- flow ---------- */
+function go(i) {
+  stepI = i; const st = steps[i]; if (!st) return;
+  setPips(); stopDemo(); setCap(st, i); setScore();
+  if (st.brief) { board1(); tray.replaceChildren(); brief(); autoDemo(st); return; }
+  st.enter(); autoDemo(st);
+}
+function restart() { reset(); stepI = 0; busy = false; board.replaceChildren(); go(0); }
+const modes = $('#modes');
+function showModes() { UNBOX_SEE.close(); stopDemo(); modes.classList.add('on'); $('#modePlay').focus({ preventScroll: true }); }
+function playMode() { modes.classList.remove('on'); UNBOX_SEE.close(); restart(); }
+function seeMode() { modes.classList.remove('on'); UNBOX_SEE.open({ onPlay: playMode, onClose: showModes }); }
+$('#modePlay').addEventListener('click', playMode); $('#modeSee').addEventListener('click', seeMode); $('#modeBtn').addEventListener('click', showModes);
+function start() { document.documentElement.classList.remove('bgonly'); showModes(); }
+window.gameStart = start;                                              // the portfolio's handheld calls this when its screen is pressed
+if (!document.documentElement.classList.contains('bgonly')) start();
+else { stepI = 0; setPips(); }
+
+/* floating cards on the attract screen */
+const fan = $('#fan'), COLS = ['#7a3cff', '#e8374c', '#2d8cff', '#2fb870', '#ff7b2c', '#ff4f9a', '#14a3ad'];
+for (let i = 0; i < 9; i++) { const c = el('i'); c.style.cssText = `--c:${COLS[i % 7]};--r:${(i * 37 % 40) - 20}deg;--t:${3 + i % 4}s;left:${(i * 11 + 2) % 92}%;top:${i % 2 ? 6 + (i * 7) % 18 : 62 + (i * 5) % 22}%;animation-delay:${-i * .6}s`; fan.append(c); }
+})();
+</script>
+</body>
+</html>
