@@ -404,6 +404,7 @@
     // turn: how far the ring has revolved (radians); prog: 0..1 through the section;
     // top: where the section sits on screen (px). While the view slides the building passes at full speed and the
     // sky only follows part of the way — far layers least — so the sky reads as deep behind the building.
+    if (!SW || !SH) return;                                   // the sky was sized while its box had no size yet (page loaded in a hidden / zero-size window)
     const panX = turn * 110 * DPR + t * 8 * DPR, panY = prog * 420 * DPR, lag = top * DPR;
     const follow = k => Math.min(0.9, 0.2 + k * 0.5);      // share of the slide a layer at depth k follows
     const bg = sx.createLinearGradient(0, 0, 0, SH);
@@ -520,6 +521,7 @@
       if (front && csTitle.textContent !== front.item.title) csTitle.textContent = front.item.title;
       frontProject = front;
       rideCassettes(dt, t);
+      if (!skyVR.SW && stage.clientWidth) sizeSpace();         // it has a size now: size the skies
       useSky(skyVR); drawSpace(t, angle + offset, vrProg(), r.top);
     }
     requestAnimationFrame(frame);
@@ -530,6 +532,7 @@
     const r = roomView.getBoundingClientRect();
     if (r.bottom > 0 && r.top < innerHeight) {
       const screens = scrollY / innerHeight;               // fast: tied to every screen scrolled, not the whole room scene
+      if (!skyRoom.SW && roomView.clientWidth) sizeSpace();
       useSky(skyRoom); drawSpace(now / 1000, screens * 0.6, screens * 0.7, r.top, true);
     }
     requestAnimationFrame(roomSkyFrame);
